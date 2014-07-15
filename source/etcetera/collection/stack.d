@@ -118,18 +118,19 @@ class Stack(T)
 	{
 		assert(this.count > 0, "Stack empty, popping failed.");
 
-		this._popped = *this._pointer;
 		this._pointer--;
 		this._count--;
 
 		if ((this._count <= (this.capacity / 2)) && ((this._size / 2) >= this._minimumSize))
 		{
+			this._popped = *(this._pointer + 1);
 			this._size /= 2;
 			this._data = cast(T*)realloc(this._data, this._size);
 			this._pointer = this._data + (this._count - 1);
+			return this._popped;
 		}
 
-		return this._popped;
+		return *(this._pointer + 1);
 	}
 
 	/**
