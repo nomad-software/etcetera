@@ -13,7 +13,7 @@ import core.exception;
 import core.stdc.stdlib : calloc, realloc, free;
 
 /**
- * A standard stack type implementation.
+ * A generic last-in-first-out (LIFO) stack implementation.
  */
 class Stack(T)
 {
@@ -35,7 +35,7 @@ class Stack(T)
 	/**
 	 * The minimum size in bytes that the stack will allocate.
 	 */
-	private immutable size_t _minimumSize;
+	private immutable size_t _minSize;
 
 	/**
 	 * The current size of the stack.
@@ -47,24 +47,25 @@ class Stack(T)
 	 */
 	private size_t _count = 0;
 
-	/*
-	 * Constructor.
-	 */
-	public this()
-	{
-		this._minimumSize = 32_000;
-		this._size = this._minimumSize;
-		this._data = cast(T*)calloc(this.capacity, T.sizeof);
-		this._pointer = this._data;
-		this._pointer--;
-	}
-
 	/**
-	 * Destructor.
+	 * Construct a new stack.
+	 *
+	 * By default the stack is allocated 32k bytes. Once the stack grows above 
+	 * that limit it is rellocated to use double, ad infinitum. If the stack 
+	 * reduces to use only half of its allocation the allocation is halfed. The 
+	 * stack will never uses below the minimum allocation amount.
+	 *
+	 * Params:
+	 *     minSize = The minimum size of the stack. Set to 32kb by default.
 	 */
-	~this()
+	final public this(size_t minSize = 32_000)
 	{
-		free(this._data);
+		assert(minSize >= T.sizeof, "Stack must allocate for at least one item.");
+
+		this._minSize = minSize;
+		this._size    = this._minSize;
+		this._data    = cast(T*)calloc(this.capacity, T.sizeof);
+		this._pointer = this._data - 1;
 	}
 
 	/**
@@ -73,14 +74,14 @@ class Stack(T)
 	 * Params:
 	 *     item = The item to push onto the stack.
 	 */
-	public void push(T item)
+	final public void push(T item)
 	{
 		this._pointer++;
 
 		if (this.capacity < (this._count + 1))
 		{
-			this._size *= 2;
-			this._data = cast(T*)realloc(this._data, this._size);
+			this._size   *= 2;
+			this._data    = cast(T*)realloc(this._data, this._size);
 			this._pointer = this._data + this._count;
 		}
 
@@ -98,7 +99,7 @@ class Stack(T)
 	 * Throws:
 	 *     AssertError if the stack is empty.
 	 */
-	public T peek()
+	final public T peek()
 	{
 		assert(this.count > 0, "Stack empty, peeking failed.");
 
@@ -114,18 +115,18 @@ class Stack(T)
 	 * Throws:
 	 *     AssertError if the stack is empty.
 	 */
-	public T pop()
+	final public T pop()
 	{
 		assert(this.count > 0, "Stack empty, popping failed.");
 
 		this._pointer--;
 		this._count--;
 
-		if ((this._count <= (this.capacity / 2)) && ((this._size / 2) >= this._minimumSize))
+		if ((this._count <= (this.capacity / 2)) && ((this._size / 2) >= this._minSize))
 		{
-			this._popped = *(this._pointer + 1);
-			this._size /= 2;
-			this._data = cast(T*)realloc(this._data, this._size);
+			this._popped  = *(this._pointer + 1);
+			this._size   /= 2;
+			this._data    = cast(T*)realloc(this._data, this._size);
 			this._pointer = this._data + (this._count - 1);
 			return this._popped;
 		}
@@ -139,7 +140,7 @@ class Stack(T)
 	 * Returns:
 	 *     The number of items stored in the stack.
 	 */
-	public @property size_t count()
+	final public @property size_t count()
 	{
 		return this._count;
 	}
@@ -150,42 +151,103 @@ class Stack(T)
 	 * Returns:
 	 *     true if the stack is empty, false if not.
 	 */
-	public @property bool empty()
+	final public @property bool empty()
 	{
 		return (this._count == 0);
+	}
+
+	/**
+	 * Check if a value is contained in the stack.
+	 *
+	 * Params:
+	 *     item = The item to find in the stack.
+	 *
+	 * Returns:
+	 *     true if the item is found on the stack, false if not.
+	 */
+	final public bool contains(T item)
+	{
+		for (T* x = this._data; x < this._data + this._count ; x++)
+		{
+			if (*x == item)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Clear the stack.
+	 */
+	final public void clear()
+	{
+		if (this._size > this._minSize)
+		{
+			this._size = this._minSize;
+			this._data = cast(T*)realloc(this._data, this._size);
+		}
+
+		this._pointer = this._data - 1;
+		this._count   = 0;
 	}
 
 	/**
 	 * The current item capacity of the stack. This will change if the stack 
 	 * reallocates more memory.
 	 */
-	private @property size_t capacity()
+	final private @property size_t capacity()
 	{
 		return this._size / T.sizeof;
 	}
+
+	/**
+	 * Destructor.
+	 */
+	final private ~this()
+	{
+		free(this._data);
+	}
+
 }
 
 ///
 unittest
 {
 	auto stack = new Stack!(int);
-	int iterations = 1_000_000;
 
 	assert(stack.empty);
+	assert(stack.count == 0);
 
-	for (int x = 1; x <= iterations ; x++)
+	int limit = 1_000_000;
+
+	for (int x = 1; x <= limit ; x++)
 	{
 		stack.push(x);
 	}
 
-	assert(stack.peek() == iterations);
-	assert(stack.count == iterations);
+	assert(stack.peek() == limit);
+	assert(stack.count == limit);
+	assert(stack.contains(1));
+	assert(stack.contains(limit));
 	assert(!stack.empty);
 
-	for (int x = iterations; x >= 1 ; x--)
+	for (int x = limit; x >= 1 ; x--)
 	{
 		assert(stack.pop() == x);
 	}
 
 	assert(stack.empty);
+
+	for (int x = 1; x <= limit ; x++)
+	{
+		stack.push(x);
+	}
+
+	stack.clear();
+
+	assert(stack.empty);
+	assert(stack.count == 0);
+	assert(!stack.contains(1));
+	assert(!stack.contains(limit));
 }

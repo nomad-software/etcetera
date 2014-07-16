@@ -17,31 +17,62 @@
 </div>
 <div class="module-members"><h2><a name="Stack"></a>class <span class="symbol">Stack</span>(T);
 </h2>
-<div class="declaration-description"><div class="sections"><p>A standard stack type implementation.</p>
+<div class="declaration-description"><div class="sections"><p>A generic last-in-first-out (LIFO) stack implementation.</p>
 <h3>Examples</h3><p><pre>
 <span class="keyword">auto</span> stack = <span class="keyword">new</span> <span class="symbol">Stack</span>!(<span class="keyword">int</span>);
-<span class="keyword">int</span> iterations = 1_000_000;
 
 <span class="keyword">assert</span>(stack.empty);
+<span class="keyword">assert</span>(stack.count == 0);
 
-<span class="keyword">for</span> (<span class="keyword">int</span> x = 1; x &lt;= iterations ; x++)
+<span class="keyword">int</span> limit = 1_000_000;
+
+<span class="keyword">for</span> (<span class="keyword">int</span> x = 1; x &lt;= limit ; x++)
 {
 	stack.push(x);
 }
 
-<span class="keyword">assert</span>(stack.peek() == iterations);
-<span class="keyword">assert</span>(stack.count == iterations);
+<span class="keyword">assert</span>(stack.peek() == limit);
+<span class="keyword">assert</span>(stack.count == limit);
+<span class="keyword">assert</span>(stack.contains(1));
+<span class="keyword">assert</span>(stack.contains(limit));
 <span class="keyword">assert</span>(!stack.empty);
 
-<span class="keyword">for</span> (<span class="keyword">int</span> x = iterations; x &gt;= 1 ; x--)
+<span class="keyword">for</span> (<span class="keyword">int</span> x = limit; x &gt;= 1 ; x--)
 {
 	<span class="keyword">assert</span>(stack.pop() == x);
 }
 
 <span class="keyword">assert</span>(stack.empty);
+
+<span class="keyword">for</span> (<span class="keyword">int</span> x = 1; x &lt;= limit ; x++)
+{
+	stack.push(x);
+}
+
+stack.clear();
+
+<span class="keyword">assert</span>(stack.empty);
+<span class="keyword">assert</span>(stack.count == 0);
+<span class="keyword">assert</span>(!stack.contains(1));
+<span class="keyword">assert</span>(!stack.contains(limit));
 </pre>
 </p></div>
-<div class="class-members"><h2><a name="push"></a>void <span class="symbol">push</span>(T item);
+<div class="class-members"><h2><a name="this"></a> this(size_t minSize = 32000);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Construct a new stack.
+</p>
+<p>By default the stack is allocated 32k bytes. Once the stack grows above
+ that limit it is rellocated to use double, ad infinitum. If the stack
+ reduces to use only half of its allocation the allocation is halfed. The
+ stack will never uses below the minimum allocation amount.
+
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>size_t minSize</td>
+<td>The minimum size of the stack. Set to 32kb by default.</td></tr>
+</table>
+</div>
+</div>
+<h2><a name="push"></a>void <span class="symbol">push</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Push an item onto the stack.
 </p>
@@ -82,6 +113,21 @@
 <div class="declaration-description"><div class="sections"><p>Test if the stack is <span class="symbol">empty</span> or not.
 </p>
 <h3>Return Value</h3><p><strong>true</strong> if the stack is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
+</div>
+</div>
+<h2><a name="contains"></a>bool <span class="symbol">contains</span>(T item);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Check if a value is contained in the stack.
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>T item</td>
+<td>The item to find in the stack.</td></tr>
+</table>
+<h3>Return Value</h3><p><strong>true</strong> if the item is found on the stack, <strong>false</strong> if not.</p>
+</div>
+</div>
+<h2><a name="clear"></a>void <span class="symbol">clear</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Clear the stack.</p>
 </div>
 </div>
 </div>
