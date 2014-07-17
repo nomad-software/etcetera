@@ -78,7 +78,7 @@ class Stack(T)
 	{
 		this._pointer++;
 
-		if (this.capacity < (this._count + 1))
+		if (this.count == this.capacity)
 		{
 			this._size   *= 2;
 			this._data    = cast(T*)realloc(this._data, this._size);
