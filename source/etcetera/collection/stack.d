@@ -10,7 +10,7 @@ module etcetera.collection.stack;
  * Imports.
  */
 import core.exception;
-import core.stdc.stdlib : calloc, realloc, free;
+import core.stdc.stdlib;
 
 /**
  * A generic last-in-first-out (LIFO) stack implementation.
@@ -52,29 +52,47 @@ class Stack(T)
 	 *
 	 * By default the stack is allocated 32k bytes. Once the stack grows above 
 	 * that limit it is rellocated to use double, ad infinitum. If the stack 
-	 * reduces to use only half of its allocation the allocation is halfed. The 
-	 * stack will never uses below the minimum allocation amount.
+	 * reduces to use only half of its allocation it is halfed. The stack will 
+	 * never have below the minimum allocation amount.
 	 *
 	 * Params:
 	 *     minSize = The minimum size of the stack. Set to 32kb by default.
+	 *
+	 * Throws:
+	 *     $(PARAM_TABLE
+	 *         $(PARAM_ROW AssertError, If the minimum allocated size is not big enough for at least one item.)
+	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory allocation fails.)
+	 *     )
 	 */
-	final public this(size_t minSize = 32_000)
+	final public this(size_t minSize = 32_000) nothrow
 	{
 		assert(minSize >= T.sizeof, "Stack must allocate for at least one item.");
 
 		this._minSize = minSize;
 		this._size    = this._minSize;
-		this._data    = cast(T*)calloc(this.capacity, T.sizeof);
+		this._data    = cast(T*)malloc(this._size);
+		if (this._data is null)
+		{
+			throw new InvalidMemoryOperationError();
+		}
 		this._pointer = this._data - 1;
 	}
 
 	/**
 	 * Push an item onto the stack.
 	 *
+	 * This method reallocates and doubles the memory used by the stack if no 
+	 * more items can be stored in available memory.
+	 *
 	 * Params:
 	 *     item = The item to push onto the stack.
+	 *
+	 * Throws:
+	 *     $(PARAM_TABLE
+	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory reallocation fails.)
+	 *     )
 	 */
-	final public void push(T item)
+	final public void push(T item) nothrow
 	{
 		this._pointer++;
 
@@ -82,6 +100,10 @@ class Stack(T)
 		{
 			this._size   *= 2;
 			this._data    = cast(T*)realloc(this._data, this._size);
+			if (this._data is null)
+			{
+				throw new InvalidMemoryOperationError();
+			}
 			this._pointer = this._data + this._count;
 		}
 
@@ -91,15 +113,17 @@ class Stack(T)
 	}
 
 	/**
-	 * Return the latest item pushed onto the stack.
+	 * Return the last item pushed onto the stack but don't remove it.
 	 *
 	 * Returns:
 	 *     The last item pushed onto the stack.
 	 *
 	 * Throws:
-	 *     AssertError if the stack is empty.
+	 *     $(PARAM_TABLE
+	 *         $(PARAM_ROW AssertError, If the stack is empty.)
+	 *     )
 	 */
-	final public T peek()
+	final public T peek() const nothrow pure
 	{
 		assert(this.count > 0, "Stack empty, peeking failed.");
 
@@ -107,15 +131,21 @@ class Stack(T)
 	}
 
 	/**
-	 * Return the latest item pushed onto the stack and remove it from the stack.
+	 * Remove and return the last item pushed onto the stack.
+	 *
+	 * This method reallocates the memory used by the stack, halfing it if less 
+	 * than half is currently being used.
 	 *
 	 * Returns:
 	 *     The last item pushed onto the stack.
 	 *
 	 * Throws:
-	 *     AssertError if the stack is empty.
+	 *     $(PARAM_TABLE
+	 *         $(PARAM_ROW AssertError, If the stack is empty.)
+	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory reallocation fails.)
+	 *     )
 	 */
-	final public T pop()
+	final public T pop() nothrow
 	{
 		assert(this.count > 0, "Stack empty, popping failed.");
 
@@ -127,6 +157,10 @@ class Stack(T)
 			this._popped  = *(this._pointer + 1);
 			this._size   /= 2;
 			this._data    = cast(T*)realloc(this._data, this._size);
+			if (this._data is null)
+			{
+				throw new InvalidMemoryOperationError();
+			}
 			this._pointer = this._data + (this._count - 1);
 			return this._popped;
 		}
@@ -140,7 +174,7 @@ class Stack(T)
 	 * Returns:
 	 *     The number of items stored in the stack.
 	 */
-	final public @property size_t count()
+	final public @property size_t count() const nothrow pure
 	{
 		return this._count;
 	}
@@ -151,7 +185,7 @@ class Stack(T)
 	 * Returns:
 	 *     true if the stack is empty, false if not.
 	 */
-	final public @property bool empty()
+	final public @property bool empty() const nothrow pure
 	{
 		return (this._count == 0);
 	}
@@ -159,13 +193,16 @@ class Stack(T)
 	/**
 	 * Check if a value is contained in the stack.
 	 *
+	 * This is a simple linear search and can take quite some time with large 
+	 * stacks.
+	 *
 	 * Params:
 	 *     item = The item to find in the stack.
 	 *
 	 * Returns:
 	 *     true if the item is found on the stack, false if not.
 	 */
-	final public bool contains(T item)
+	final public bool contains(T item) nothrow
 	{
 		for (T* x = this._data; x < this._data + this._count ; x++)
 		{
@@ -178,14 +215,26 @@ class Stack(T)
 	}
 
 	/**
-	 * Clear the stack.
+	 * Clears the stack.
+	 *
+	 * This method reallocates the memory used by the stack to the minimum size 
+	 * if more is currently allocated.
+	 *
+	 * Throws:
+	 *     $(PARAM_TABLE
+	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory reallocation fails.)
+	 *     )
 	 */
-	final public void clear()
+	final public void clear() nothrow
 	{
 		if (this._size > this._minSize)
 		{
 			this._size = this._minSize;
 			this._data = cast(T*)realloc(this._data, this._size);
+			if (this._data is null)
+			{
+				throw new InvalidMemoryOperationError();
+			}
 		}
 
 		this._pointer = this._data - 1;
@@ -195,8 +244,11 @@ class Stack(T)
 	/**
 	 * The current item capacity of the stack. This will change if the stack 
 	 * reallocates more memory.
+	 *
+	 * Returns:
+	 *     The capacity of how many items the stack can hold.
 	 */
-	final private @property size_t capacity()
+	final private @property size_t capacity() const nothrow pure
 	{
 		return this._size / T.sizeof;
 	}
@@ -204,7 +256,7 @@ class Stack(T)
 	/**
 	 * Destructor.
 	 */
-	final private ~this()
+	final private ~this() nothrow
 	{
 		free(this._data);
 	}
@@ -214,16 +266,42 @@ class Stack(T)
 ///
 unittest
 {
+	auto stack = new Stack!(string);
+
+	stack.push("Foo");
+	stack.push("Bar");
+	stack.push("Baz");
+
+	assert(!stack.empty);
+	assert(stack.count == 3);
+	assert(stack.contains("Bar"));
+
+	assert(stack.peek() == "Baz");
+	assert(stack.pop() == "Baz");
+	assert(stack.pop() == "Bar");
+
+	stack.clear();
+
+	assert(!stack.contains("Foo"));
+	assert(stack.empty);
+	assert(stack.count == 0);
+}
+
+unittest
+{
 	auto stack = new Stack!(int);
 
 	assert(stack.empty);
 	assert(stack.count == 0);
+	assert(stack.capacity == 8000);
 
-	int limit = 1_000_000;
+	int limit = 1_024_000;
 
 	for (int x = 1; x <= limit ; x++)
 	{
 		stack.push(x);
+		assert(stack.peek() == x);
+		assert(stack.count == x);
 	}
 
 	assert(stack.peek() == limit);
@@ -231,17 +309,23 @@ unittest
 	assert(stack.contains(1));
 	assert(stack.contains(limit));
 	assert(!stack.empty);
+	assert(stack.capacity == 1024000);
 
 	for (int x = limit; x >= 1 ; x--)
 	{
+		assert(stack.count == x);
+		assert(stack.peek() == x);
 		assert(stack.pop() == x);
 	}
 
 	assert(stack.empty);
+	assert(stack.capacity == 8000);
 
 	for (int x = 1; x <= limit ; x++)
 	{
 		stack.push(x);
+		assert(stack.peek() == x);
+		assert(stack.count == x);
 	}
 
 	stack.clear();
@@ -250,4 +334,5 @@ unittest
 	assert(stack.count == 0);
 	assert(!stack.contains(1));
 	assert(!stack.contains(limit));
+	assert(stack.capacity == 8000);
 }

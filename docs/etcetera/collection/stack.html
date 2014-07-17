@@ -19,105 +19,108 @@
 </h2>
 <div class="declaration-description"><div class="sections"><p>A generic last-in-first-out (LIFO) stack implementation.</p>
 <h3>Examples</h3><p><pre>
-<span class="keyword">auto</span> stack = <span class="keyword">new</span> <span class="symbol">Stack</span>!(<span class="keyword">int</span>);
+<span class="keyword">auto</span> stack = <span class="keyword">new</span> <span class="symbol">Stack</span>!(string);
 
-<span class="keyword">assert</span>(stack.empty);
-<span class="keyword">assert</span>(stack.count == 0);
+stack.push(<span class="string">"Foo"</span>);
+stack.push(<span class="string">"Bar"</span>);
+stack.push(<span class="string">"Baz"</span>);
 
-<span class="keyword">int</span> limit = 1_000_000;
-
-<span class="keyword">for</span> (<span class="keyword">int</span> x = 1; x &lt;= limit ; x++)
-{
-	stack.push(x);
-}
-
-<span class="keyword">assert</span>(stack.peek() == limit);
-<span class="keyword">assert</span>(stack.count == limit);
-<span class="keyword">assert</span>(stack.contains(1));
-<span class="keyword">assert</span>(stack.contains(limit));
 <span class="keyword">assert</span>(!stack.empty);
+<span class="keyword">assert</span>(stack.count == 3);
+<span class="keyword">assert</span>(stack.contains(<span class="string">"Bar"</span>));
 
-<span class="keyword">for</span> (<span class="keyword">int</span> x = limit; x &gt;= 1 ; x--)
-{
-	<span class="keyword">assert</span>(stack.pop() == x);
-}
-
-<span class="keyword">assert</span>(stack.empty);
-
-<span class="keyword">for</span> (<span class="keyword">int</span> x = 1; x &lt;= limit ; x++)
-{
-	stack.push(x);
-}
+<span class="keyword">assert</span>(stack.peek() == <span class="string">"Baz"</span>);
+<span class="keyword">assert</span>(stack.pop() == <span class="string">"Baz"</span>);
+<span class="keyword">assert</span>(stack.pop() == <span class="string">"Bar"</span>);
 
 stack.clear();
 
+<span class="keyword">assert</span>(!stack.contains(<span class="string">"Foo"</span>));
 <span class="keyword">assert</span>(stack.empty);
 <span class="keyword">assert</span>(stack.count == 0);
-<span class="keyword">assert</span>(!stack.contains(1));
-<span class="keyword">assert</span>(!stack.contains(limit));
 </pre>
 </p></div>
-<div class="class-members"><h2><a name="this"></a> this(size_t minSize = 32000);
+<div class="class-members"><h2><a name="this"></a>nothrow  this(size_t minSize = 32000);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Construct a new stack.
 </p>
 <p>By default the stack is allocated 32k bytes. Once the stack grows above
  that limit it is rellocated to use double, ad infinitum. If the stack
- reduces to use only half of its allocation the allocation is halfed. The
- stack will never uses below the minimum allocation amount.
+ reduces to use only half of its allocation it is halfed. The stack will
+ never have below the minimum allocation amount.
 
 </p>
 <h3>Parameters</h3><table class="parameter-list"><tr><td>size_t minSize</td>
 <td>The minimum size of the stack. Set to 32kb by default.</td></tr>
 </table>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>AssertError</td><td>If the minimum allocated size is not big enough for at least one item.</td></tr>
+         <tr><td>InvalidMemoryOperationError</td><td>If memory allocation fails.</td></tr>
+     </table></p>
 </div>
 </div>
-<h2><a name="push"></a>void <span class="symbol">push</span>(T item);
+<h2><a name="push"></a>nothrow void <span class="symbol">push</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Push an item onto the stack.
+</p>
+<p>This method reallocates and doubles the memory used by the stack if no
+ more items can be stored in available memory.
+
 </p>
 <h3>Parameters</h3><table class="parameter-list"><tr><td>T item</td>
 <td>The item to <span class="symbol">push</span> onto the stack.</td></tr>
 </table>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>InvalidMemoryOperationError</td><td>If memory reallocation fails.</td></tr>
+     </table></p>
 </div>
 </div>
-<h2><a name="peek"></a>T <span class="symbol">peek</span>();
+<h2><a name="peek"></a>const pure nothrow T <span class="symbol">peek</span>();
 </h2>
-<div class="declaration-description"><div class="sections"><p>Return the latest item pushed onto the stack.
+<div class="declaration-description"><div class="sections"><p>Return the last item pushed onto the stack but don't remove it.
 </p>
 <h3>Return Value</h3><p>The last item pushed onto the stack.
 
 </p>
-<h3>Exceptions Thrown</h3><p>AssertError if the stack is empty.</p>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>AssertError</td><td>If the stack is empty.</td></tr>
+     </table></p>
 </div>
 </div>
-<h2><a name="pop"></a>T <span class="symbol">pop</span>();
+<h2><a name="pop"></a>nothrow T <span class="symbol">pop</span>();
 </h2>
-<div class="declaration-description"><div class="sections"><p>Return the latest item pushed onto the stack and remove it from the stack.
+<div class="declaration-description"><div class="sections"><p>Remove and return the last item pushed onto the stack.
+</p>
+<p>This method reallocates the memory used by the stack, halfing it if less
+ than half is currently being used.
+
 </p>
 <h3>Return Value</h3><p>The last item pushed onto the stack.
 
 </p>
-<h3>Exceptions Thrown</h3><p>AssertError if the stack is empty.</p>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>AssertError</td><td>If the stack is empty.</td></tr>
+         <tr><td>InvalidMemoryOperationError</td><td>If memory reallocation fails.</td></tr>
+     </table></p>
 </div>
 </div>
-<h2><a name="count"></a>size_t <span class="symbol">count</span>();
+<h2><a name="count"></a>const pure nothrow size_t <span class="symbol">count</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Get the number of items stored in the stack.
 </p>
 <h3>Return Value</h3><p>The number of items stored in the stack.</p>
 </div>
 </div>
-<h2><a name="empty"></a>bool <span class="symbol">empty</span>();
+<h2><a name="empty"></a>const pure nothrow bool <span class="symbol">empty</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Test if the stack is <span class="symbol">empty</span> or not.
 </p>
 <h3>Return Value</h3><p><strong>true</strong> if the stack is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
 </div>
 </div>
-<h2><a name="contains"></a>bool <span class="symbol">contains</span>(T item);
+<h2><a name="contains"></a>nothrow bool <span class="symbol">contains</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Check if a value is contained in the stack.
+</p>
+<p>This is a simple linear search and can take quite some time with large
+ stacks.
+
 </p>
 <h3>Parameters</h3><table class="parameter-list"><tr><td>T item</td>
 <td>The item to find in the stack.</td></tr>
@@ -125,9 +128,16 @@ stack.clear();
 <h3>Return Value</h3><p><strong>true</strong> if the item is found on the stack, <strong>false</strong> if not.</p>
 </div>
 </div>
-<h2><a name="clear"></a>void <span class="symbol">clear</span>();
+<h2><a name="clear"></a>nothrow void <span class="symbol">clear</span>();
 </h2>
-<div class="declaration-description"><div class="sections"><p>Clear the stack.</p>
+<div class="declaration-description"><div class="sections"><p>Clears the stack.
+</p>
+<p>This method reallocates the memory used by the stack to the minimum size
+ if more is currently allocated.
+
+</p>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>InvalidMemoryOperationError</td><td>If memory reallocation fails.</td></tr>
+     </table></p>
 </div>
 </div>
 </div>
