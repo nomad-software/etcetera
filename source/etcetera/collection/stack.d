@@ -71,10 +71,12 @@ class Stack(T)
 		this._minSize = minSize;
 		this._size    = this._minSize;
 		this._data    = cast(T*)malloc(this._size);
+
 		if (this._data is null)
 		{
 			throw new InvalidMemoryOperationError();
 		}
+
 		this._pointer = this._data - 1;
 	}
 
@@ -98,12 +100,14 @@ class Stack(T)
 
 		if (this.count == this.capacity)
 		{
-			this._size   *= 2;
-			this._data    = cast(T*)realloc(this._data, this._size);
+			this._size *= 2;
+			this._data  = cast(T*)realloc(this._data, this._size);
+
 			if (this._data is null)
 			{
 				throw new InvalidMemoryOperationError();
 			}
+
 			this._pointer = this._data + this._count;
 		}
 
@@ -133,8 +137,8 @@ class Stack(T)
 	/**
 	 * Remove and return the last item pushed onto the stack.
 	 *
-	 * This method reallocates the memory used by the stack, halfing it if less 
-	 * than half is currently being used.
+	 * This method reallocates the memory used by the stack, halfing it if 
+	 * half will adequately hold all the items.
 	 *
 	 * Returns:
 	 *     The last item pushed onto the stack.
@@ -157,10 +161,12 @@ class Stack(T)
 			this._popped  = *(this._pointer + 1);
 			this._size   /= 2;
 			this._data    = cast(T*)realloc(this._data, this._size);
+
 			if (this._data is null)
 			{
 				throw new InvalidMemoryOperationError();
 			}
+
 			this._pointer = this._data + (this._count - 1);
 			return this._popped;
 		}
@@ -231,6 +237,7 @@ class Stack(T)
 		{
 			this._size = this._minSize;
 			this._data = cast(T*)realloc(this._data, this._size);
+
 			if (this._data is null)
 			{
 				throw new InvalidMemoryOperationError();
@@ -260,7 +267,6 @@ class Stack(T)
 	{
 		free(this._data);
 	}
-
 }
 
 ///
