@@ -487,6 +487,8 @@ unittest
 	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
 
 	queue.enqueue(5);
+	// Make the new back and front can still be searched.
+	assert(queue.contains(4));
 	assert(queue.contains(5));
 	assert(queue._data[0 .. 4] == [5, 2, 3, 4]);
 
@@ -619,4 +621,45 @@ unittest
 	assert(queue.dequeue() == 7);
 	assert(!queue.contains(7));
 	assert(queue.empty);
+}
+
+unittest
+{
+	auto queue = new Queue!(long)(long.sizeof);
+
+	queue.enqueue(1);
+	assert(queue.contains(1));
+	assert(queue._data[0 .. 1] == [1]);
+
+	queue.enqueue(2);
+	assert(queue.contains(2));
+	assert(queue._data[0 .. 2] == [1, 2]);
+
+	queue.enqueue(3);
+	assert(queue.contains(3));
+	assert(queue._data[0 .. 3] == [1, 2, 3]);
+
+	queue.enqueue(4);
+	assert(queue.contains(3));
+	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
+
+	assert(queue.dequeue() == 1);
+	assert(!queue.contains(1));
+	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
+
+	queue.enqueue(5);
+	assert(queue.contains(5));
+	assert(queue._data[0 .. 4] == [5, 2, 3, 4]);
+
+	queue.enqueue(6);
+	assert(queue.contains(6));
+	assert(queue._data[0 .. 5] == [2, 3, 4, 5, 6]);
+
+	queue.enqueue(7);
+	assert(queue.contains(7));
+	assert(queue._data[0 .. 6] == [2, 3, 4, 5, 6, 7]);
+
+	queue.enqueue(8);
+	assert(queue.contains(8));
+	assert(queue._data[0 .. 7] == [2, 3, 4, 5, 6, 7, 8]);
 }
