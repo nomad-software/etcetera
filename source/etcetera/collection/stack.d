@@ -10,7 +10,7 @@ module etcetera.collection.stack;
  * Imports.
  */
 import core.exception;
-import core.stdc.stdlib;
+import core.stdc.stdlib : malloc, realloc, free;
 
 /**
  * A generic last-in-first-out (LIFO) stack implementation.
