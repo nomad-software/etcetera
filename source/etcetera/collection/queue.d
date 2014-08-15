@@ -487,7 +487,7 @@ unittest
 	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
 
 	queue.enqueue(5);
-	// Make the new back and front can still be searched.
+	// Make sure the new back and front can still be searched.
 	assert(queue.contains(4));
 	assert(queue.contains(5));
 	assert(queue._data[0 .. 4] == [5, 2, 3, 4]);
