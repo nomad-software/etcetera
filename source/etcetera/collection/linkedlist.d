@@ -174,6 +174,30 @@ class LinkedList(T)
 	}
 
 	/**
+	 * Remove the first item in the list.
+	 */
+	final public void removeFirst() nothrow
+	{
+		if (this._first)
+		{
+			if ((*this._first).next)
+			{
+				this._first = (*this._first).next;
+				free((*this._first).prev);
+				(*this._first).prev = null;
+			}
+			else
+			{
+				free(this._first);
+				this._first = null;
+				this._last  = null;
+			}
+
+			this._count--;
+		}
+	}
+
+	/**
 	 * Insert a new item at the end of the list.
 	 *
 	 * Params:
@@ -213,8 +237,36 @@ class LinkedList(T)
 	}
 
 	/**
+	 * Remove the last item in the list.
+	 */
+	final public void removeLast() nothrow
+	{
+		if (this._last)
+		{
+			if ((*this._last).prev)
+			{
+				this._last = (*this._last).prev;
+				free((*this._last).next);
+				(*this._last).next = null;
+			}
+			else
+			{
+				free(this._last);
+				this._first = null;
+				this._last  = null;
+			}
+
+			this._count--;
+		}
+	}
+
+	/**
 	 * Insert a new item at the specified index. The index must be between (and 
 	 * including) 0 and the number returned by the count method.
+	 *
+	 * This method uses a linear search to find the index in the list. The only 
+	 * optimisation done is that if the index is past half way, the search 
+	 * starts from the last item and works backwards.
 	 *
 	 * Params:
 	 *     item = The item to insert.
@@ -226,7 +278,7 @@ class LinkedList(T)
 	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory allocation fails.)
 	 *     )
 	 */
-	final public void insert(T item, size_t index) //nothrow
+	final public void insert(T item, size_t index) nothrow
 	{
 		if (index < 0 || index > this._count)
 		{
@@ -285,7 +337,134 @@ class LinkedList(T)
 
 			this._count++;
 		}
+	}
 
+	/**
+	 * Get the item at the specified index. The index must be between (and 
+	 * including) 0 and be below the number returned by the count method.
+	 *
+	 * This method uses a linear search to find the index in the list. The only 
+	 * optimisation done is that if the index is past half way, the search 
+	 * starts from the last item and works backwards.
+	 *
+	 * Params:
+	 *     index = The index of the item to return.
+	 *
+	 * Throws:
+	 *     $(PARAM_TABLE
+	 *         $(PARAM_ROW AssertError, If the list is empty.)
+	 *         $(PARAM_ROW RangeError, If index is outside of limits.)
+	 *     )
+	 */
+	final public T get(size_t index) nothrow pure
+	{
+		assert(this._last, "Linked list empty, getting value failed.");
+
+		if (index < 0 || index >= this._count)
+		{
+			throw new RangeError("Index outside of list.");
+		}
+
+		if (index == 0)
+		{
+			return (*this._first).data;
+		}
+		else if (index == this._count - 1)
+		{
+			return (*this._last).data;
+		}
+		else
+		{
+			if (index >= this._count / 2)
+			{
+				size_t listIndex = this.count - 1;
+				for (auto listNode = this._last; listNode !is null; listIndex--, listNode = (*listNode).prev)
+				{
+					if (listIndex == index)
+					{
+						return (*listNode).data;
+					}
+				}
+			}
+			else
+			{
+				size_t listIndex;
+				for (auto listNode = this._first; listNode !is null; listIndex++, listNode = (*listNode).next)
+				{
+					if (listIndex == index)
+					{
+						return (*listNode).data;
+					}
+				}
+			}
+		}
+		assert(0, "Linked list empty, getting value failed.");
+	}
+
+	/**
+	 * Remove the item at the specified index. The index must be between (and 
+	 * including) 0 and be below the number returned by the count method.
+	 *
+	 * This method uses a linear search to find the index in the list. The only 
+	 * optimisation done is that if the index is past half way, the search 
+	 * starts from the last item and works backwards.
+	 *
+	 * Params:
+	 *     index = The index of the item to remove.
+	 *
+	 * Throws:
+	 *     $(PARAM_TABLE
+	 *         $(PARAM_ROW RangeError, If index is outside of limits.)
+	 *     )
+	 */
+	final public void remove(size_t index) nothrow
+	{
+		if (index < 0 || index >= this._count)
+		{
+			throw new RangeError("Index outside of list.");
+		}
+
+		if (index == 0)
+		{
+			this.removeFirst();
+		}
+		else if (index == this._count - 1)
+		{
+			this.removeLast();
+		}
+		else
+		{
+			if (index >= this._count / 2)
+			{
+				size_t listIndex = this.count - 1;
+				for (auto listNode = this._last; listNode !is null; listIndex--, listNode = (*listNode).prev)
+				{
+					if (listIndex == index)
+					{
+						(*(*listNode).prev).next = (*listNode).next;
+						(*(*listNode).next).prev = (*listNode).prev;
+						free(listNode);
+						this._count--;
+						break;
+					}
+				}
+			}
+			else
+			{
+				size_t listIndex;
+				for (auto listNode = this._first; listNode !is null; listIndex++, listNode = (*listNode).next)
+				{
+					if (listIndex == index)
+					{
+						(*(*listNode).prev).next = (*listNode).next;
+						(*(*listNode).next).prev = (*listNode).prev;
+						free(listNode);
+						this._count--;
+						break;
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -328,7 +507,7 @@ class LinkedList(T)
 	 * assert(list.byValue.array.sort == ["Bar", "Baz", "Foo", "Qux"]);
 	 * ---
 	 */
-	final public auto byValue()
+	final public auto byValue() nothrow pure
 	{
 		static struct Result
 		{
@@ -594,61 +773,6 @@ unittest
 
 unittest
 {
-	auto list = new LinkedList!(int);
-
-	list.insert(3, 0);
-	assert(list.byValue.array == [3]);
-
-	list.insert(1, 0);
-	assert(list.byValue.array == [1, 3]);
-
-	list.insert(4, 2);
-	assert(list.byValue.array == [1, 3, 4]);
-
-	list.insert(2, 1);
-	assert(list.byValue.array == [1, 2, 3, 4]);
-}
-
-unittest
-{
-	auto list = new LinkedList!(string);
-
-	list.insertFirst("Qux");
-	assert(list.first == "Qux");
-
-	list.insertFirst("Baz");
-	assert(list.first == "Baz");
-
-	list.insertFirst("Bar");
-	assert(list.first == "Bar");
-
-	list.insertFirst("Foo");
-	assert(list.first == "Foo");
-
-	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
-}
-
-unittest
-{
-	auto list = new LinkedList!(string);
-
-	list.insertLast("Foo");
-	assert(list.last == "Foo");
-
-	list.insertLast("Bar");
-	assert(list.last == "Bar");
-
-	list.insertLast("Baz");
-	assert(list.last == "Baz");
-
-	list.insertLast("Qux");
-	assert(list.last == "Qux");
-
-	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
-}
-
-unittest
-{
 	auto list = new LinkedList!(byte);
 
 	list.insertLast(2);
@@ -708,12 +832,203 @@ unittest
 
 unittest
 {
+	auto list = new LinkedList!(string);
+
+	list.insertFirst("Qux");
+	assert(list.first == "Qux");
+	assert(list.byValue.array == ["Qux"]);
+
+	list.insertFirst("Baz");
+	assert(list.first == "Baz");
+	assert(list.byValue.array == ["Baz", "Qux"]);
+
+	list.insertFirst("Bar");
+	assert(list.first == "Bar");
+	assert(list.byValue.array == ["Bar", "Baz", "Qux"]);
+
+	list.insertFirst("Foo");
+	assert(list.first == "Foo");
+	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
+}
+
+unittest
+{
+	auto list = new LinkedList!(string);
+
+	list.insertLast("Foo");
+	list.insertLast("Bar");
+	list.insertLast("Baz");
+	list.insertLast("Qux");
+
+	assert(list.first == "Foo");
+	assert(list.last == "Qux");
+	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
+	assert(list.count == 4);
+
+	list.removeFirst();
+	assert(list.first == "Bar");
+	assert(list.last == "Qux");
+	assert(list.byValue.array == ["Bar", "Baz", "Qux"]);
+	assert(list.count == 3);
+
+	list.removeFirst();
+	assert(list.first == "Baz");
+	assert(list.last == "Qux");
+	assert(list.byValue.array == ["Baz", "Qux"]);
+	assert(list.count == 2);
+
+	list.removeFirst();
+	assert(list.first == "Qux");
+	assert(list.last == "Qux");
+	assert(list.byValue.array == ["Qux"]);
+	assert(list.count == 1);
+
+	list.removeFirst();
+	assert(list._first is null);
+	assert(list._last is null);
+	assert(list.byValue.array == []);
+	assert(list.count == 0);
+}
+
+unittest
+{
+	auto list = new LinkedList!(string);
+
+	list.insertLast("Foo");
+	assert(list.last == "Foo");
+	assert(list.byValue.array == ["Foo"]);
+
+	list.insertLast("Bar");
+	assert(list.last == "Bar");
+	assert(list.byValue.array == ["Foo", "Bar"]);
+
+	list.insertLast("Baz");
+	assert(list.last == "Baz");
+	assert(list.byValue.array == ["Foo", "Bar", "Baz"]);
+
+	list.insertLast("Qux");
+	assert(list.last == "Qux");
+	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
+}
+
+unittest
+{
+	auto list = new LinkedList!(string);
+
+	list.insertLast("Foo");
+	list.insertLast("Bar");
+	list.insertLast("Baz");
+	list.insertLast("Qux");
+
+	assert(list.first == "Foo");
+	assert(list.last == "Qux");
+	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
+	assert(list.count == 4);
+
+	list.removeLast();
+	assert(list.first == "Foo");
+	assert(list.last == "Baz");
+	assert(list.byValue.array == ["Foo", "Bar", "Baz"]);
+	assert(list.count == 3);
+
+	list.removeLast();
+	assert(list.first == "Foo");
+	assert(list.last == "Bar");
+	assert(list.byValue.array == ["Foo", "Bar"]);
+	assert(list.count == 2);
+
+	list.removeLast();
+	assert(list.first == "Foo");
+	assert(list.last == "Foo");
+	assert(list.byValue.array == ["Foo"]);
+	assert(list.count == 1);
+
+	list.removeLast();
+	assert(list._first is null);
+	assert(list._last is null);
+	assert(list.byValue.array == []);
+	assert(list.count == 0);
+}
+
+unittest
+{
+	auto list = new LinkedList!(int);
+
+	list.insert(3, 0);
+	assert(list.byValue.array == [3]);
+
+	list.insert(1, 0);
+	assert(list.byValue.array == [1, 3]);
+
+	list.insert(4, 2);
+	assert(list.byValue.array == [1, 3, 4]);
+
+	list.insert(2, 1);
+	assert(list.byValue.array == [1, 2, 3, 4]);
+}
+
+unittest
+{
+	auto list = new LinkedList!(string);
+
+	list.insertLast("Foo");
+	list.insertLast("Bar");
+	list.insertLast("Baz");
+	list.insertLast("Qux");
+
+	assert(list.get(0) == list.first);
+	assert(list.get(1) == "Bar");
+	assert(list.get(2) == "Baz");
+	assert(list.get(list.count - 1) == list.last);
+
+	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
+	assert(list.count == 4);
+}
+
+unittest
+{
+	auto list = new LinkedList!(string);
+
+	list.insertLast("Foo");
+	list.insertLast("Bar");
+	list.insertLast("Baz");
+	list.insertLast("Qux");
+	list.insertLast("Quux");
+
+	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux", "Quux"]);
+	assert(list.count == 5);
+
+	list.remove(2);
+	assert(list.byValue.array == ["Foo", "Bar", "Qux", "Quux"]);
+	assert(list.count == 4);
+
+	list.remove(1);
+	assert(list.byValue.array == ["Foo", "Qux", "Quux"]);
+	assert(list.count == 3);
+
+	list.remove(2);
+	assert(list.byValue.array == ["Foo", "Qux"]);
+	assert(list.count == 2);
+
+	list.remove(0);
+	assert(list.byValue.array == ["Qux"]);
+	assert(list.count == 1);
+
+	list.remove(0);
+	assert(list.byValue.array == []);
+	assert(list.count == 0);
+	assert(list._first is null);
+	assert(list._last is null);
+}
+
+unittest
+{
 	auto list = new LinkedList!(int);
 
 	assert(list.empty);
 	assert(list.count == 0);
 
-	int limit = 10_000_000;
+	int limit = 1000;
 
 	for (int x = 1; x <= limit ; x++)
 	{
@@ -725,5 +1040,15 @@ unittest
 	assert(list.count == limit);
 	assert(!list.empty);
 
-	list.insert(1, 9_999_995);
+	list.insert(1337, 995);
+
+	assert(list.get(994) == 995);
+	assert(list.get(995) == 1337);
+	assert(list.get(996) == 996);
+
+	list.remove(995);
+
+	assert(list.get(994) == 995);
+	assert(list.get(995) == 996);
+	assert(list.get(996) == 997);
 }

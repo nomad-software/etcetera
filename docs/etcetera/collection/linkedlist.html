@@ -89,6 +89,11 @@ list.clear();
      </table></p>
 </div>
 </div>
+<h2><a name="removeFirst"></a>nothrow void <span class="symbol">removeFirst</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Remove the first item in the list.</p>
+</div>
+</div>
 <h2><a name="insertLast"></a>nothrow void <span class="symbol">insertLast</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Insert a new item at the end of the list.
@@ -100,10 +105,20 @@ list.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="insert"></a>void <span class="symbol">insert</span>(T item, size_t index);
+<h2><a name="removeLast"></a>nothrow void <span class="symbol">removeLast</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Remove the last item in the list.</p>
+</div>
+</div>
+<h2><a name="insert"></a>nothrow void <span class="symbol">insert</span>(T item, size_t index);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Insert a new item at the specified index. The index must be between (and
  including) 0 and the number returned by the count method.
+</p>
+<p>This method uses a linear search to find the index in the list. The only
+ optimisation done is that if the index is past half way, the search
+ starts from the last item and works backwards.
+
 </p>
 <h3>Parameters</h3><table class="parameter-list"><tr><td>T item</td>
 <td>The item to <span class="symbol">insert</span>.</td></tr>
@@ -115,12 +130,47 @@ list.clear();
      </table></p>
 </div>
 </div>
+<h2><a name="get"></a>pure nothrow T <span class="symbol">get</span>(size_t index);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Get the item at the specified index. The index must be between (and
+ including) 0 and be below the number returned by the count method.
+</p>
+<p>This method uses a linear search to find the index in the list. The only
+ optimisation done is that if the index is past half way, the search
+ starts from the last item and works backwards.
+
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>size_t index</td>
+<td>The index of the item to return.</td></tr>
+</table>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>AssertError</td><td>If the list is empty.</td></tr>
+         <tr><td>RangeError</td><td>If index is outside of limits.</td></tr>
+     </table></p>
+</div>
+</div>
+<h2><a name="remove"></a>nothrow void <span class="symbol">remove</span>(size_t index);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Remove the item at the specified index. The index must be between (and
+ including) 0 and be below the number returned by the count method.
+</p>
+<p>This method uses a linear search to find the index in the list. The only
+ optimisation done is that if the index is past half way, the search
+ starts from the last item and works backwards.
+
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>size_t index</td>
+<td>The index of the item to <span class="symbol">remove</span>.</td></tr>
+</table>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>RangeError</td><td>If index is outside of limits.</td></tr>
+     </table></p>
+</div>
+</div>
 <h2><a name="clear"></a>nothrow void <span class="symbol">clear</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Clears the list and deallocates all memory used by the nodes.</p>
 </div>
 </div>
-<h2><a name="byValue"></a>auto <span class="symbol">byValue</span>();
+<h2><a name="byValue"></a>pure nothrow auto <span class="symbol">byValue</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Return a bidirectional range to allow this list to be using with various
  other algorithms.
