@@ -282,7 +282,7 @@ class LinkedList(T)
 	{
 		if (index < 0 || index > this._count)
 		{
-			throw new RangeError("Index outside of list.");
+			throw new RangeError("Index outside of list bounds.");
 		}
 
 		if (index == 0)
@@ -352,17 +352,14 @@ class LinkedList(T)
 	 *
 	 * Throws:
 	 *     $(PARAM_TABLE
-	 *         $(PARAM_ROW AssertError, If the list is empty.)
 	 *         $(PARAM_ROW RangeError, If index is outside of limits.)
 	 *     )
 	 */
 	final public T get(size_t index) nothrow pure
 	{
-		assert(this._last, "Linked list empty, getting value failed.");
-
-		if (index < 0 || index >= this._count)
+		if (this._count == 0 || index < 0 || index >= this._count)
 		{
-			throw new RangeError("Index outside of list.");
+			throw new RangeError("Index outside of list bounds.");
 		}
 
 		if (index == 0)
@@ -398,7 +395,7 @@ class LinkedList(T)
 				}
 			}
 		}
-		assert(0, "Linked list empty, getting value failed.");
+		assert(0, "Error accessing linked list.");
 	}
 
 	/**
@@ -419,9 +416,9 @@ class LinkedList(T)
 	 */
 	final public void remove(size_t index) nothrow
 	{
-		if (index < 0 || index >= this._count)
+		if (this._count == 0 || index < 0 || index >= this._count)
 		{
-			throw new RangeError("Index outside of list.");
+			throw new RangeError("Index outside of list bounds.");
 		}
 
 		if (index == 0)
