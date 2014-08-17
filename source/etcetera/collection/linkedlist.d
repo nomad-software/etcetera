@@ -24,14 +24,14 @@ private struct Node(T)
 	public Node!(T)* prev;
 
 	/**
-	 * The node data.
-	 */
-	public T data;
-
-	/**
 	 * The next node.
 	 */
 	public Node!(T)* next;
+
+	/**
+	 * The node data.
+	 */
+	public T data;
 }
 
 /**
