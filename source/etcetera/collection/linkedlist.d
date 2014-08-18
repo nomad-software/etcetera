@@ -155,10 +155,10 @@ class LinkedList(T)
 		}
 
 		(*node).prev = null;
-		(*node).data = item;
 		(*node).next = null;
+		(*node).data = item;
 
-		if (this._first)
+		if (this._first !is null)
 		{
 			(*this._first).prev = node;
 			node.next = this._first;
@@ -178,9 +178,9 @@ class LinkedList(T)
 	 */
 	final public void removeFirst() nothrow
 	{
-		if (this._first)
+		if (this._first !is null)
 		{
-			if ((*this._first).next)
+			if ((*this._first).next !is null)
 			{
 				this._first = (*this._first).next;
 				free((*this._first).prev);
@@ -218,10 +218,10 @@ class LinkedList(T)
 		}
 
 		(*node).prev = null;
-		(*node).data = item;
 		(*node).next = null;
+		(*node).data = item;
 
-		if (this._last)
+		if (this._last !is null)
 		{
 			(*this._last).next = node;
 			node.prev = this._last;
@@ -241,9 +241,9 @@ class LinkedList(T)
 	 */
 	final public void removeLast() nothrow
 	{
-		if (this._last)
+		if (this._last !is null)
 		{
-			if ((*this._last).prev)
+			if ((*this._last).prev !is null)
 			{
 				this._last = (*this._last).prev;
 				free((*this._last).next);
