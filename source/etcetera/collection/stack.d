@@ -50,13 +50,15 @@ class Stack(T)
 	/**
 	 * Construct a new stack.
 	 *
-	 * By default the stack is allocated 32k bytes. Once the stack grows above 
-	 * that limit it is rellocated to use double, ad infinitum. If the stack 
-	 * reduces to use only half of its allocation it is halfed. The stack will 
-	 * never have below the minimum allocation amount.
+	 * By default the stack is allocated enough memory for 10,000 items. If 
+	 * more items are added, the stack can grow by doubling its allocation, ad 
+	 * infinitum. If the items within reduce to only use half of the current 
+	 * allocation the stack will half it. The stack will never shrink below the 
+	 * minimum capacity amount.
 	 *
 	 * Params:
-	 *     minSize = The minimum size of the stack. Set to 32kb by default.
+	 *     minCapacity = The minimum number of items to allocate space for.
+	 *                   The stack will never shrink below this allocation.
 	 *
 	 * Throws:
 	 *     $(PARAM_TABLE
@@ -64,11 +66,11 @@ class Stack(T)
 	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory allocation fails.)
 	 *     )
 	 */
-	final public this(size_t minSize = 32_000) nothrow
+	final public this(size_t minCapacity = 10_000) nothrow
 	{
-		assert(minSize >= T.sizeof, "Stack must allocate for at least one item.");
+		assert(minCapacity >= 1, "Stack must allow for at least one item.");
 
-		this._minSize = minSize;
+		this._minSize = minCapacity * T.sizeof;
 		this._size    = this._minSize;
 		this._data    = cast(T*)malloc(this._size);
 
@@ -299,9 +301,9 @@ unittest
 
 	assert(stack.empty);
 	assert(stack.count == 0);
-	assert(stack.capacity == 8000);
+	assert(stack.capacity == 10_000);
 
-	int limit = 1_024_000;
+	int limit = 1_000_000;
 
 	for (int x = 1; x <= limit ; x++)
 	{
@@ -315,7 +317,7 @@ unittest
 	assert(stack.contains(1));
 	assert(stack.contains(limit));
 	assert(!stack.empty);
-	assert(stack.capacity == 1024000);
+	assert(stack.capacity == 1_280_000);
 
 	for (int x = limit; x >= 1 ; x--)
 	{
@@ -325,7 +327,7 @@ unittest
 	}
 
 	assert(stack.empty);
-	assert(stack.capacity == 8000);
+	assert(stack.capacity == 10_000);
 
 	for (int x = 1; x <= limit ; x++)
 	{
@@ -340,5 +342,5 @@ unittest
 	assert(stack.count == 0);
 	assert(!stack.contains(1));
 	assert(!stack.contains(limit));
-	assert(stack.capacity == 8000);
+	assert(stack.capacity == 10_000);
 }

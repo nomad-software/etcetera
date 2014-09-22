@@ -66,13 +66,15 @@ class Queue(T)
 	/**
 	 * Construct a new queue.
 	 *
-	 * By default the queue is allocated 32k bytes. Once the queue grows above 
-	 * that limit it is rellocated to use double, ad infinitum. If the queue 
-	 * reduces to use only half of its allocation, it is halfed. The queue will 
-	 * never have below the minimum allocation amount.
+	 * By default the queue is allocated enough memory for 10,000 items. If 
+	 * more items are added, the queue can grow by doubling its allocation, ad 
+	 * infinitum. If the items within reduce to only use half of the current 
+	 * allocation the queue will half it. The queue will never shrink below the 
+	 * minimum capacity amount.
 	 *
 	 * Params:
-	 *     minSize = The minimum size of the queue. Set to 32kb by default.
+	 *     minCapacity = The minimum number of items to allocate space for.
+	 *                   The queue will never shrink below this allocation.
 	 *
 	 * Throws:
 	 *     $(PARAM_TABLE
@@ -80,11 +82,11 @@ class Queue(T)
 	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory allocation fails.)
 	 *     )
 	 */
-	final public this(size_t minSize = 32_000) nothrow
+	final public this(size_t minCapacity = 10_000) nothrow
 	{
-		assert(minSize >= T.sizeof, "Queue must allocate for at least one item.");
+		assert(minCapacity >= 1, "Queue must allow for at least one item.");
 
-		this._minSize = minSize;
+		this._minSize = minCapacity * T.sizeof;
 		this._size    = this._minSize;
 		this._data    = cast(T*)malloc(this._size);
 
@@ -381,9 +383,9 @@ unittest
 
 	assert(queue.empty);
 	assert(queue.count == 0);
-	assert(queue.capacity == 8000);
+	assert(queue.capacity == 10_000);
 
-	int limit = 1_024_000;
+	int limit = 1_000_000;
 
 	for (int x = 1; x <= limit ; x++)
 	{
@@ -397,7 +399,7 @@ unittest
 	assert(queue.contains(1));
 	assert(queue.contains(limit));
 	assert(!queue.empty);
-	assert(queue.capacity == 1024000);
+	assert(queue.capacity == 1_280_000);
 
 	for (int x = 1; x <= limit ; x++)
 	{
@@ -407,7 +409,7 @@ unittest
 	}
 
 	assert(queue.empty);
-	assert(queue.capacity == 8000);
+	assert(queue.capacity == 10_000);
 
 	for (int x = 1; x <= limit ; x++)
 	{
@@ -422,12 +424,12 @@ unittest
 	assert(queue.count == 0);
 	assert(!queue.contains(1));
 	assert(!queue.contains(limit));
-	assert(queue.capacity == 8000);
+	assert(queue.capacity == 10_000);
 }
 
 unittest
 {
-	auto queue = new Queue!(byte)(byte.sizeof);
+	auto queue = new Queue!(byte)(1);
 
 	queue.enqueue(1);
 	assert(queue._data[0 .. 1] == [1]);
@@ -464,7 +466,7 @@ unittest
 
 unittest
 {
-	auto queue = new Queue!(short)(short.sizeof);
+	auto queue = new Queue!(short)(1);
 
 	queue.enqueue(1);
 	assert(queue.contains(1));
@@ -511,7 +513,7 @@ unittest
 
 unittest
 {
-	auto queue = new Queue!(int)(int.sizeof);
+	auto queue = new Queue!(int)(1);
 
 	queue.enqueue(1);
 	assert(queue.contains(1));
@@ -564,7 +566,7 @@ unittest
 
 unittest
 {
-	auto queue = new Queue!(long)(long.sizeof);
+	auto queue = new Queue!(long)(1);
 
 	queue.enqueue(1);
 	assert(queue.contains(1));
@@ -625,7 +627,7 @@ unittest
 
 unittest
 {
-	auto queue = new Queue!(long)(long.sizeof);
+	auto queue = new Queue!(long)(1);
 
 	queue.enqueue(1);
 	assert(queue.contains(1));
