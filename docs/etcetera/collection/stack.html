@@ -40,25 +40,27 @@ stack.clear();
 <span class="keyword">assert</span>(stack.count == 0);
 </pre>
 </p></div>
-<div class="class-members"><h2><a name="this"></a>nothrow  this(size_t minSize = 32000);
+<div class="class-members"><h2><a name="Stack.this"></a>nothrow this(size_t minCapacity = 10000);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Construct a new stack.
 </p>
-<p>By default the stack is allocated 32k bytes. Once the stack grows above
- that limit it is rellocated to use double, ad infinitum. If the stack
- reduces to use only half of its allocation it is halfed. The stack will
- never have below the minimum allocation amount.
+<p>By default the stack is allocated enough memory for 10,000 items. If
+ more items are added, the stack can grow by doubling its allocation, ad
+ infinitum. If the items within reduce to only use half of the current
+ allocation the stack will half it. The stack will never shrink below the
+ minimum capacity amount.
 
 </p>
-<h3>Parameters</h3><table class="parameter-list"><tr><td>size_t minSize</td>
-<td>The minimum size of the stack. Set to 32kb by default.</td></tr>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>size_t minCapacity</td>
+<td>The minimum number of items to allocate space for.
+                   The stack will never shrink below this allocation.</td></tr>
 </table>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>AssertError</td><td>If the minimum allocated size is not big enough for at least one item.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If the minimum allocated size is not big enough for at least one item.</td></tr>
          <tr><td>InvalidMemoryOperationError</td><td>If memory allocation fails.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="push"></a>nothrow void <span class="symbol">push</span>(T item);
+<h2><a name="Stack.push"></a>final nothrow void <span class="symbol">push</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Push an item onto the stack.
 </p>
@@ -69,22 +71,22 @@ stack.clear();
 <h3>Parameters</h3><table class="parameter-list"><tr><td>T item</td>
 <td>The item to <span class="symbol">push</span> onto the stack.</td></tr>
 </table>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>InvalidMemoryOperationError</td><td>If memory reallocation fails.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>InvalidMemoryOperationError</td><td>If memory reallocation fails.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="peek"></a>const pure nothrow T <span class="symbol">peek</span>();
+<h2><a name="Stack.peek"></a>final const pure nothrow T <span class="symbol">peek</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Return the last item pushed onto the stack but don't remove it.
 </p>
 <h3>Return Value</h3><p>The last item pushed onto the stack.
 
 </p>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>AssertError</td><td>If the stack is empty.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If the stack is empty.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="pop"></a>nothrow T <span class="symbol">pop</span>();
+<h2><a name="Stack.pop"></a>final nothrow T <span class="symbol">pop</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Remove and return the last item pushed onto the stack.
 </p>
@@ -95,26 +97,26 @@ stack.clear();
 <h3>Return Value</h3><p>The last item pushed onto the stack.
 
 </p>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>AssertError</td><td>If the stack is empty.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If the stack is empty.</td></tr>
          <tr><td>InvalidMemoryOperationError</td><td>If memory reallocation fails.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="count"></a>const pure nothrow size_t <span class="symbol">count</span>();
+<h2><a name="Stack.count"></a>final const pure nothrow @property size_t <span class="symbol">count</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Get the number of items stored in the stack.
 </p>
 <h3>Return Value</h3><p>The number of items stored in the stack.</p>
 </div>
 </div>
-<h2><a name="empty"></a>const pure nothrow bool <span class="symbol">empty</span>();
+<h2><a name="Stack.empty"></a>final const pure nothrow @property bool <span class="symbol">empty</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Test if the stack is <span class="symbol">empty</span> or not.
 </p>
 <h3>Return Value</h3><p><strong>true</strong> if the stack is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
 </div>
 </div>
-<h2><a name="contains"></a>nothrow bool <span class="symbol">contains</span>(T item);
+<h2><a name="Stack.contains"></a>final nothrow bool <span class="symbol">contains</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Check if a value is contained in the stack.
 </p>
@@ -128,7 +130,7 @@ stack.clear();
 <h3>Return Value</h3><p><strong>true</strong> if the item is found on the stack, <strong>false</strong> if not.</p>
 </div>
 </div>
-<h2><a name="clear"></a>nothrow void <span class="symbol">clear</span>();
+<h2><a name="Stack.clear"></a>final nothrow void <span class="symbol">clear</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Clears the stack.
 </p>
@@ -136,7 +138,7 @@ stack.clear();
  if more is currently allocated.
 
 </p>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>InvalidMemoryOperationError</td><td>If memory reallocation fails.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>InvalidMemoryOperationError</td><td>If memory reallocation fails.</td></tr>
      </table></p>
 </div>
 </div>

@@ -42,75 +42,75 @@ list.clear();
 <span class="keyword">assert</span>(list.count == 0);
 </pre>
 </p></div>
-<div class="class-members"><h2><a name="first"></a>const pure nothrow T <span class="symbol">first</span>();
+<div class="class-members"><h2><a name="LinkedList.first"></a>final const pure nothrow @property T <span class="symbol">first</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Get the <span class="symbol">first</span> item in the list.
 </p>
 <h3>Return Value</h3><p>The <span class="symbol">first</span> item in the list.
 
 </p>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>AssertError</td><td>If the list is empty.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If the list is empty.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="last"></a>const pure nothrow T <span class="symbol">last</span>();
+<h2><a name="LinkedList.last"></a>final const pure nothrow @property T <span class="symbol">last</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Get the <span class="symbol">last</span> item in the list.
 </p>
 <h3>Return Value</h3><p>The <span class="symbol">last</span> item in the list.
 
 </p>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>AssertError</td><td>If the list is empty.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If the list is empty.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="count"></a>const pure nothrow size_t <span class="symbol">count</span>();
+<h2><a name="LinkedList.count"></a>final const pure nothrow @property size_t <span class="symbol">count</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Get the number of items stored in the list.
 </p>
 <h3>Return Value</h3><p>The number of items stored in the list.</p>
 </div>
 </div>
-<h2><a name="empty"></a>const pure nothrow bool <span class="symbol">empty</span>();
+<h2><a name="LinkedList.empty"></a>final const pure nothrow @property bool <span class="symbol">empty</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Test if the list is <span class="symbol">empty</span> or not.
 </p>
 <h3>Return Value</h3><p><strong>true</strong> if the list is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
 </div>
 </div>
-<h2><a name="insertFirst"></a>nothrow void <span class="symbol">insertFirst</span>(T item);
+<h2><a name="LinkedList.insertFirst"></a>final nothrow void <span class="symbol">insertFirst</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Insert a new item at the beginning of the list.
 </p>
 <h3>Parameters</h3><table class="parameter-list"><tr><td>T item</td>
 <td>The item to insert.</td></tr>
 </table>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>InvalidMemoryOperationError</td><td>If memory allocation fails.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>InvalidMemoryOperationError</td><td>If memory allocation fails.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="removeFirst"></a>nothrow void <span class="symbol">removeFirst</span>();
+<h2><a name="LinkedList.removeFirst"></a>final nothrow void <span class="symbol">removeFirst</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Remove the first item in the list.</p>
 </div>
 </div>
-<h2><a name="insertLast"></a>nothrow void <span class="symbol">insertLast</span>(T item);
+<h2><a name="LinkedList.insertLast"></a>final nothrow void <span class="symbol">insertLast</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Insert a new item at the end of the list.
 </p>
 <h3>Parameters</h3><table class="parameter-list"><tr><td>T item</td>
 <td>The item to insert.</td></tr>
 </table>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>InvalidMemoryOperationError</td><td>If memory allocation fails.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>InvalidMemoryOperationError</td><td>If memory allocation fails.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="removeLast"></a>nothrow void <span class="symbol">removeLast</span>();
+<h2><a name="LinkedList.removeLast"></a>final nothrow void <span class="symbol">removeLast</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Remove the last item in the list.</p>
 </div>
 </div>
-<h2><a name="insert"></a>nothrow void <span class="symbol">insert</span>(T item, size_t index);
+<h2><a name="LinkedList.insert"></a>final nothrow void <span class="symbol">insert</span>(T item, size_t index);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Insert a new item at the specified index. The index must be between (and
  including) 0 and the number returned by the count method.
@@ -125,12 +125,12 @@ list.clear();
 <tr><td>size_t index</td>
 <td>The index in which to <span class="symbol">insert</span> the item.</td></tr>
 </table>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>RangeError</td><td>If index is outside of limits.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>RangeError</td><td>If index is outside of limits.</td></tr>
          <tr><td>InvalidMemoryOperationError</td><td>If memory allocation fails.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="get"></a>pure nothrow T <span class="symbol">get</span>(size_t index);
+<h2><a name="LinkedList.get"></a>final pure nothrow T <span class="symbol">get</span>(size_t index);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Get the item at the specified index. The index must be between (and
  including) 0 and be below the number returned by the count method.
@@ -143,12 +143,11 @@ list.clear();
 <h3>Parameters</h3><table class="parameter-list"><tr><td>size_t index</td>
 <td>The index of the item to return.</td></tr>
 </table>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>AssertError</td><td>If the list is empty.</td></tr>
-         <tr><td>RangeError</td><td>If index is outside of limits.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>RangeError</td><td>If index is outside of limits.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="remove"></a>nothrow void <span class="symbol">remove</span>(size_t index);
+<h2><a name="LinkedList.remove"></a>final nothrow void <span class="symbol">remove</span>(size_t index);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Remove the item at the specified index. The index must be between (and
  including) 0 and be below the number returned by the count method.
@@ -161,16 +160,16 @@ list.clear();
 <h3>Parameters</h3><table class="parameter-list"><tr><td>size_t index</td>
 <td>The index of the item to <span class="symbol">remove</span>.</td></tr>
 </table>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">        <tr><td>RangeError</td><td>If index is outside of limits.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>RangeError</td><td>If index is outside of limits.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="clear"></a>nothrow void <span class="symbol">clear</span>();
+<h2><a name="LinkedList.clear"></a>final nothrow void <span class="symbol">clear</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Clears the list and deallocates all memory used by the nodes.</p>
 </div>
 </div>
-<h2><a name="byValue"></a>pure nothrow auto <span class="symbol">byValue</span>();
+<h2><a name="LinkedList.byValue"></a>final pure nothrow auto <span class="symbol">byValue</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Return a bidirectional range to allow this list to be using with various
  other algorithms.
@@ -197,7 +196,7 @@ list.insertLast(<span class="string">"Bar"</span>);
 </p>
 </div>
 </div>
-<h2><a name="opApply"></a>int <span class="symbol">opApply</span>(ForeachAggregate!T dg);
+<h2><a name="LinkedList.opApply"></a>final int <span class="symbol">opApply</span>(ForeachAggregate!T dg);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Enable forward iteration in foreach loops.
 </p>
@@ -228,7 +227,7 @@ list.insertLast(<span class="string">"Bar"</span>);
 </p>
 </div>
 </div>
-<h2><a name="opApply"></a>int <span class="symbol">opApply</span>(IndexedForeachAggregate!T dg);
+<h2><a name="LinkedList.opApply"></a>final int <span class="symbol">opApply</span>(IndexedForeachAggregate!T dg);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Enable forward iteration in foreach loops using an index.
 </p>
@@ -259,7 +258,7 @@ list.insertLast(<span class="string">"Bar"</span>);
 </p>
 </div>
 </div>
-<h2><a name="opApplyReverse"></a>int <span class="symbol">opApplyReverse</span>(ForeachAggregate!T dg);
+<h2><a name="LinkedList.opApplyReverse"></a>final int <span class="symbol">opApplyReverse</span>(ForeachAggregate!T dg);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Enable reverse iteration in foreach loops.
 </p>
@@ -290,7 +289,7 @@ list.insertLast(<span class="string">"Bar"</span>);
 </p>
 </div>
 </div>
-<h2><a name="opApplyReverse"></a>int <span class="symbol">opApplyReverse</span>(IndexedForeachAggregate!T dg);
+<h2><a name="LinkedList.opApplyReverse"></a>final int <span class="symbol">opApplyReverse</span>(IndexedForeachAggregate!T dg);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Enable reverse iteration in foreach loops using an index.
 </p>
