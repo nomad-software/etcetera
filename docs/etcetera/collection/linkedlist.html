@@ -42,7 +42,7 @@ list.clear();
 <span class="keyword">assert</span>(list.count == 0);
 </pre>
 </p></div>
-<div class="class-members"><h2><a name="LinkedList.first"></a>final const pure nothrow @property T <span class="symbol">first</span>();
+<div class="class-members"><h2><a name="LinkedList.first"></a>final pure nothrow @property T <span class="symbol">first</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Get the <span class="symbol">first</span> item in the list.
 </p>
@@ -53,7 +53,7 @@ list.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="LinkedList.last"></a>final const pure nothrow @property T <span class="symbol">last</span>();
+<h2><a name="LinkedList.last"></a>final pure nothrow @property T <span class="symbol">last</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Get the <span class="symbol">last</span> item in the list.
 </p>
@@ -85,7 +85,7 @@ list.clear();
 <h3>Parameters</h3><table class="parameter-list"><tr><td>T item</td>
 <td>The item to insert.</td></tr>
 </table>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>InvalidMemoryOperationError</td><td>If memory allocation fails.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>OutOfMemoryError</td><td>If memory allocation fails.</td></tr>
      </table></p>
 </div>
 </div>
@@ -101,7 +101,7 @@ list.clear();
 <h3>Parameters</h3><table class="parameter-list"><tr><td>T item</td>
 <td>The item to insert.</td></tr>
 </table>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>InvalidMemoryOperationError</td><td>If memory allocation fails.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>OutOfMemoryError</td><td>If memory allocation fails.</td></tr>
      </table></p>
 </div>
 </div>
@@ -125,8 +125,8 @@ list.clear();
 <tr><td>size_t index</td>
 <td>The index in which to <span class="symbol">insert</span> the item.</td></tr>
 </table>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>RangeError</td><td>If index is outside of limits.</td></tr>
-         <tr><td>InvalidMemoryOperationError</td><td>If memory allocation fails.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If index is outside of limits.</td></tr>
+         <tr><td>OutOfMemoryError</td><td>If memory allocation fails.</td></tr>
      </table></p>
 </div>
 </div>

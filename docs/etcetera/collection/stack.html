@@ -56,7 +56,7 @@ stack.clear();
                    The stack will never shrink below this allocation.</td></tr>
 </table>
 <h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If the minimum allocated size is not big enough for at least one item.</td></tr>
-         <tr><td>InvalidMemoryOperationError</td><td>If memory allocation fails.</td></tr>
+         <tr><td>OutOfMemoryError</td><td>If memory allocation fails.</td></tr>
      </table></p>
 </div>
 </div>
@@ -71,11 +71,11 @@ stack.clear();
 <h3>Parameters</h3><table class="parameter-list"><tr><td>T item</td>
 <td>The item to <span class="symbol">push</span> onto the stack.</td></tr>
 </table>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>InvalidMemoryOperationError</td><td>If memory reallocation fails.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>OutOfMemoryError</td><td>If memory reallocation fails.</td></tr>
      </table></p>
 </div>
 </div>
-<h2><a name="Stack.peek"></a>final const pure nothrow T <span class="symbol">peek</span>();
+<h2><a name="Stack.peek"></a>final pure nothrow T <span class="symbol">peek</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Return the last item pushed onto the stack but don't remove it.
 </p>
@@ -98,7 +98,7 @@ stack.clear();
 
 </p>
 <h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If the stack is empty.</td></tr>
-         <tr><td>InvalidMemoryOperationError</td><td>If memory reallocation fails.</td></tr>
+         <tr><td>OutOfMemoryError</td><td>If memory reallocation fails.</td></tr>
      </table></p>
 </div>
 </div>
@@ -116,7 +116,7 @@ stack.clear();
 <h3>Return Value</h3><p><strong>true</strong> if the stack is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
 </div>
 </div>
-<h2><a name="Stack.contains"></a>final nothrow bool <span class="symbol">contains</span>(T item);
+<h2><a name="Stack.contains"></a>final bool <span class="symbol">contains</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Check if a value is contained in the stack.
 </p>
@@ -138,7 +138,7 @@ stack.clear();
  if more is currently allocated.
 
 </p>
-<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>InvalidMemoryOperationError</td><td>If memory reallocation fails.</td></tr>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>OutOfMemoryError</td><td>If memory reallocation fails.</td></tr>
      </table></p>
 </div>
 </div>

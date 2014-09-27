@@ -9,8 +9,9 @@ module etcetera.collection.stack;
 /**
  * Imports.
  */
-import core.exception;
-import core.stdc.stdlib : malloc, realloc, free;
+import core.memory;
+import core.stdc.string : memset;
+import std.traits;
 
 /**
  * A generic last-in-first-out (LIFO) stack implementation.
@@ -63,7 +64,7 @@ class Stack(T)
 	 * Throws:
 	 *     $(PARAM_TABLE
 	 *         $(PARAM_ROW AssertError, If the minimum allocated size is not big enough for at least one item.)
-	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory allocation fails.)
+	 *         $(PARAM_ROW OutOfMemoryError, If memory allocation fails.)
 	 *     )
 	 */
 	final public this(size_t minCapacity = 10_000) nothrow
@@ -72,11 +73,14 @@ class Stack(T)
 
 		this._minSize = minCapacity * T.sizeof;
 		this._size    = this._minSize;
-		this._data    = cast(T*)malloc(this._size);
 
-		if (this._data is null)
+		static if (hasIndirections!(T))
 		{
-			throw new InvalidMemoryOperationError();
+			this._data = cast(T*)GC.calloc(this._size, GC.BlkAttr.NO_MOVE, typeid(T));
+		}
+		else
+		{
+			this._data = cast(T*)GC.calloc(this._size, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(T));
 		}
 
 		this._pointer = this._data - 1;
@@ -93,7 +97,7 @@ class Stack(T)
 	 *
 	 * Throws:
 	 *     $(PARAM_TABLE
-	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory reallocation fails.)
+	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
 	final public void push(T item) nothrow
@@ -102,15 +106,11 @@ class Stack(T)
 
 		if (this.count == this.capacity)
 		{
-			this._size *= 2;
-			this._data  = cast(T*)realloc(this._data, this._size);
-
-			if (this._data is null)
-			{
-				throw new InvalidMemoryOperationError();
-			}
-
+			this._size   *= 2;
+			this._data    = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
 			this._pointer = this._data + this._count;
+
+			memset(this._pointer, 0, this._size / 2);
 		}
 
 		this._count++;
@@ -129,7 +129,7 @@ class Stack(T)
 	 *         $(PARAM_ROW AssertError, If the stack is empty.)
 	 *     )
 	 */
-	final public T peek() const nothrow pure
+	final public T peek() nothrow pure
 	{
 		assert(this.count > 0, "Stack empty, peeking failed.");
 
@@ -148,32 +148,28 @@ class Stack(T)
 	 * Throws:
 	 *     $(PARAM_TABLE
 	 *         $(PARAM_ROW AssertError, If the stack is empty.)
-	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory reallocation fails.)
+	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
 	final public T pop() nothrow
 	{
 		assert(this.count > 0, "Stack empty, popping failed.");
 
-		this._pointer--;
 		this._count--;
+		this._popped = *this._pointer;
+
+		memset(this._pointer, 0, T.sizeof);
+
+		this._pointer--;
 
 		if ((this._count <= (this.capacity / 2)) && ((this._size / 2) >= this._minSize))
 		{
-			this._popped  = *(this._pointer + 1);
 			this._size   /= 2;
-			this._data    = cast(T*)realloc(this._data, this._size);
-
-			if (this._data is null)
-			{
-				throw new InvalidMemoryOperationError();
-			}
-
+			this._data    = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
 			this._pointer = this._data + (this._count - 1);
-			return this._popped;
 		}
 
-		return *(this._pointer + 1);
+		return this._popped;
 	}
 
 	/**
@@ -210,7 +206,7 @@ class Stack(T)
 	 * Returns:
 	 *     true if the item is found on the stack, false if not.
 	 */
-	final public bool contains(T item) nothrow
+	final public bool contains(T item)
 	{
 		for (T* x = this._data; x < this._data + this._count ; x++)
 		{
@@ -230,7 +226,7 @@ class Stack(T)
 	 *
 	 * Throws:
 	 *     $(PARAM_TABLE
-	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory reallocation fails.)
+	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
 	final public void clear() nothrow
@@ -238,13 +234,10 @@ class Stack(T)
 		if (this._size > this._minSize)
 		{
 			this._size = this._minSize;
-			this._data = cast(T*)realloc(this._data, this._size);
-
-			if (this._data is null)
-			{
-				throw new InvalidMemoryOperationError();
-			}
+			this._data = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
 		}
+
+		memset(this._data, 0, this._size);
 
 		this._pointer = this._data - 1;
 		this._count   = 0;
@@ -260,14 +253,6 @@ class Stack(T)
 	final private @property size_t capacity() const nothrow pure
 	{
 		return this._size / T.sizeof;
-	}
-
-	/**
-	 * Destructor.
-	 */
-	final private ~this() nothrow
-	{
-		free(this._data);
 	}
 }
 
@@ -344,3 +329,57 @@ unittest
 	assert(!stack.contains(limit));
 	assert(stack.capacity == 10_000);
 }
+
+unittest
+{
+	auto stack = new Stack!(byte)(4);
+
+	assert(stack.capacity == 4);
+	assert(stack._data[0 .. 4] == [0, 0, 0, 0]);
+
+	stack.push(1);
+	stack.push(2);
+	stack.push(3);
+	stack.push(4);
+	assert(stack._data[0 .. 4] == [1, 2, 3, 4]);
+
+	stack.push(5);
+	assert(stack.capacity == 8);
+	assert(stack._data[0 .. 8] == [1, 2, 3, 4, 5, 0, 0, 0]);
+
+	assert(stack.pop() == 5);
+	assert(stack.capacity == 4);
+	assert(stack._data[0 .. 4] == [1, 2, 3, 4]);
+
+	assert(stack.pop() == 4);
+	assert(stack.pop() == 3);
+	assert(stack.capacity == 4);
+	assert(stack._data[0 .. 4] == [1, 2, 0, 0]);
+
+	stack.clear();
+	assert(stack._data[0 .. 4] == [0, 0, 0, 0]);
+}
+
+unittest
+{
+	class Foo
+	{
+		private int _foo;
+
+		public this(int foo)
+		{
+			this._foo = foo;
+		}
+	}
+
+	auto stack = new Stack!(Foo)(4);
+
+	stack.push(new Foo(1));
+	stack.push(new Foo(2));
+	stack.push(new Foo(3));
+
+	assert(stack.pop()._foo == 3);
+	assert(stack.pop()._foo == 2);
+	assert(stack.pop()._foo == 1);
+}
+

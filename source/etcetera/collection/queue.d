@@ -9,9 +9,9 @@ module etcetera.collection.queue;
 /**
  * Imports.
  */
-import core.exception;
-import core.stdc.stdlib : malloc, realloc, free;
-import core.stdc.string : memcpy, memmove;
+import core.memory;
+import core.stdc.string : memcpy, memmove, memset;
+import std.traits;
 
 /**
  * A generic first-in-first-out (FIFO) queue implementation.
@@ -79,7 +79,7 @@ class Queue(T)
 	 * Throws:
 	 *     $(PARAM_TABLE
 	 *         $(PARAM_ROW AssertError, If the minimum allocated size is not big enough for at least one item.)
-	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory allocation fails.)
+	 *         $(PARAM_ROW OutOfMemoryError, If memory allocation fails.)
 	 *     )
 	 */
 	final public this(size_t minCapacity = 10_000) nothrow
@@ -88,11 +88,14 @@ class Queue(T)
 
 		this._minSize = minCapacity * T.sizeof;
 		this._size    = this._minSize;
-		this._data    = cast(T*)malloc(this._size);
 
-		if (this._data is null)
+		static if (hasIndirections!(T))
 		{
-			throw new InvalidMemoryOperationError();
+			this._data = cast(T*)GC.calloc(this._size, GC.BlkAttr.NO_MOVE, typeid(T));
+		}
+		else
+		{
+			this._data = cast(T*)GC.calloc(this._size, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(T));
 		}
 
 		this._front = this._data;
@@ -110,7 +113,7 @@ class Queue(T)
 	 *
 	 * Throws:
 	 *     $(PARAM_TABLE
-	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory reallocation fails.)
+	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
 	final public void enqueue(T item) nothrow
@@ -120,12 +123,7 @@ class Queue(T)
 			this._frontOffset = this._front - this._data;
 
 			this._size *= 2;
-			this._data  = cast(T*)realloc(this._data, this._size);
-
-			if (this._data is null)
-			{
-				throw new InvalidMemoryOperationError();
-			}
+			this._data  = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
 
 			if (this._frontOffset > 0)
 			{
@@ -135,6 +133,8 @@ class Queue(T)
 
 			this._front = this._data;
 			this._back  = this._data + (this._count - 1);
+
+			memset(this._data + this._count, 0, this._size / 2);
 		}
 
 		this._back++;
@@ -160,7 +160,7 @@ class Queue(T)
 	 *         $(PARAM_ROW AssertError, If the queue is empty.)
 	 *     )
 	 */
-	final public T peek() const nothrow pure
+	final public T peek() nothrow pure
 	{
 		assert(this._count > 0, "Queue empty, peeking failed.");
 
@@ -179,7 +179,7 @@ class Queue(T)
 	 * Throws:
 	 *     $(PARAM_TABLE
 	 *         $(PARAM_ROW AssertError, If the queue is empty.)
-	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory reallocation fails.)
+	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
 	final public T dequeue() nothrow
@@ -187,16 +187,19 @@ class Queue(T)
 		assert(this._count > 0, "Queue empty, dequeuing failed.");
 
 		this._count--;
+		this._dequeued = *(this._front);
+
+		memset(this._front, 0, T.sizeof);
+
+		this._front++;
+
+		if (this._front == (this._data + this.capacity))
+		{
+			this._front = this._data;
+		}
 
 		if ((this._count <= (this.capacity / 2)) && ((this._size / 2) >= this._minSize))
 		{
-			this._dequeued = *(this._front++);
-
-			if (this._front == (this._data + this.capacity))
-			{
-				this._front = this._data;
-			}
-
 			this._frontOffset = this._front - this._data;
 			this._backOffset  = this._back - this._data;
 
@@ -211,26 +214,13 @@ class Queue(T)
 			}
 
 			this._size /= 2;
-			this._data  = cast(T*)realloc(this._data, this._size);
-
-			if (this._data is null)
-			{
-				throw new InvalidMemoryOperationError();
-			}
+			this._data  = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
 
 			this._front = this._data;
 			this._back  = this._data + (this.capacity - 1);
-
-			return this._dequeued;
 		}
 
-		if ((this._front + 1) == (this._data + this.capacity))
-		{
-			this._front = this._data;
-			return *(this._data + (this.capacity - 1));
-		}
-
-		return *(this._front++);
+		return this._dequeued;
 	}
 
 	/**
@@ -267,7 +257,7 @@ class Queue(T)
 	 * Returns:
 	 *     true if the item is found on the queue, false if not.
 	 */
-	final public bool contains(T item) nothrow
+	final public bool contains(T item)
 	{
 		if (!this.empty)
 		{
@@ -310,7 +300,7 @@ class Queue(T)
 	 *
 	 * Throws:
 	 *     $(PARAM_TABLE
-	 *         $(PARAM_ROW InvalidMemoryOperationError, If memory reallocation fails.)
+	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
 	final public void clear() nothrow
@@ -318,13 +308,10 @@ class Queue(T)
 		if (this._size > this._minSize)
 		{
 			this._size = this._minSize;
-			this._data = cast(T*)realloc(this._data, this._size);
-
-			if (this._data is null)
-			{
-				throw new InvalidMemoryOperationError();
-			}
+			this._data = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
 		}
+
+		memset(this._data, 0, this._size);
 
 		this._front = this._data;
 		this._back  = this._data + (this.capacity - 1);
@@ -341,14 +328,6 @@ class Queue(T)
 	final private @property size_t capacity() const nothrow pure
 	{
 		return this._size / T.sizeof;
-	}
-
-	/**
-	 * Destructor.
-	 */
-	final private ~this() nothrow
-	{
-		free(this._data);
 	}
 }
 
@@ -448,7 +427,7 @@ unittest
 	assert(queue.contains(4));
 
 	assert(queue.dequeue() == 1);
-	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
+	assert(queue._data[0 .. 4] == [0, 2, 3, 4]);
 	assert(!queue.contains(1));
 
 	assert(queue.dequeue() == 2);
@@ -486,7 +465,7 @@ unittest
 
 	assert(queue.dequeue() == 1);
 	assert(!queue.contains(1));
-	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
+	assert(queue._data[0 .. 4] == [0, 2, 3, 4]);
 
 	queue.enqueue(5);
 	// Make sure the new back and front can still be searched.
@@ -496,7 +475,7 @@ unittest
 
 	assert(queue.dequeue() == 2);
 	assert(!queue.contains(2));
-	assert(queue._data[0 .. 4] == [5, 2, 3, 4]);
+	assert(queue._data[0 .. 4] == [5, 0, 3, 4]);
 
 	assert(queue.dequeue() == 3);
 	assert(!queue.contains(3));
@@ -533,7 +512,7 @@ unittest
 
 	assert(queue.dequeue() == 1);
 	assert(!queue.contains(1));
-	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
+	assert(queue._data[0 .. 4] == [0, 2, 3, 4]);
 
 	queue.enqueue(5);
 	assert(queue.contains(5));
@@ -541,7 +520,7 @@ unittest
 
 	assert(queue.dequeue() == 2);
 	assert(!queue.contains(2));
-	assert(queue._data[0 .. 4] == [5, 2, 3, 4]);
+	assert(queue._data[0 .. 4] == [5, 0, 3, 4]);
 
 	queue.enqueue(6);
 	assert(queue.contains(6));
@@ -549,7 +528,7 @@ unittest
 
 	assert(queue.dequeue() == 3);
 	assert(!queue.contains(3));
-	assert(queue._data[0 .. 4] == [5, 6, 3, 4]);
+	assert(queue._data[0 .. 4] == [5, 6, 0, 4]);
 
 	assert(queue.dequeue() == 4);
 	assert(!queue.contains(4));
@@ -586,7 +565,7 @@ unittest
 
 	assert(queue.dequeue() == 1);
 	assert(!queue.contains(1));
-	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
+	assert(queue._data[0 .. 4] == [0, 2, 3, 4]);
 
 	queue.enqueue(5);
 	assert(queue.contains(5));
@@ -594,7 +573,7 @@ unittest
 
 	assert(queue.dequeue() == 2);
 	assert(!queue.contains(2));
-	assert(queue._data[0 .. 4] == [5, 2, 3, 4]);
+	assert(queue._data[0 .. 4] == [5, 0, 3, 4]);
 
 	queue.enqueue(6);
 	assert(queue.contains(6));
@@ -602,7 +581,7 @@ unittest
 
 	assert(queue.dequeue() == 3);
 	assert(!queue.contains(3));
-	assert(queue._data[0 .. 4] == [5, 6, 3, 4]);
+	assert(queue._data[0 .. 4] == [5, 6, 0, 4]);
 
 	queue.enqueue(7);
 	assert(queue.contains(7));
@@ -610,7 +589,7 @@ unittest
 
 	assert(queue.dequeue() == 4);
 	assert(!queue.contains(4));
-	assert(queue._data[0 .. 4] == [5, 6, 7, 4]);
+	assert(queue._data[0 .. 4] == [5, 6, 7, 0]);
 
 	assert(queue.dequeue() == 5);
 	assert(!queue.contains(5));
@@ -647,7 +626,7 @@ unittest
 
 	assert(queue.dequeue() == 1);
 	assert(!queue.contains(1));
-	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
+	assert(queue._data[0 .. 4] == [0, 2, 3, 4]);
 
 	queue.enqueue(5);
 	assert(queue.contains(5));
@@ -665,3 +644,57 @@ unittest
 	assert(queue.contains(8));
 	assert(queue._data[0 .. 7] == [2, 3, 4, 5, 6, 7, 8]);
 }
+
+unittest
+{
+	auto queue = new Queue!(byte)(4);
+
+	assert(queue.capacity == 4);
+	assert(queue._data[0 .. 4] == [0, 0, 0, 0]);
+
+	queue.enqueue(1);
+	queue.enqueue(2);
+	queue.enqueue(3);
+	queue.enqueue(4);
+	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
+
+	queue.enqueue(5);
+	assert(queue.capacity == 8);
+	assert(queue._data[0 .. 8] == [1, 2, 3, 4, 5, 0, 0, 0]);
+
+	assert(queue.dequeue() == 1);
+	assert(queue.capacity == 4);
+	assert(queue._data[0 .. 4] == [2, 3, 4, 5]);
+
+	assert(queue.dequeue() == 2);
+	assert(queue.dequeue() == 3);
+	assert(queue.capacity == 4);
+	assert(queue._data[0 .. 4] == [0, 0, 4, 5]);
+
+	queue.clear();
+	assert(queue._data[0 .. 4] == [0, 0, 0, 0]);
+}
+
+unittest
+{
+	class Foo
+	{
+		private int _foo;
+
+		public this(int foo)
+		{
+			this._foo = foo;
+		}
+	}
+
+	auto queue = new Queue!(Foo)(4);
+
+	queue.enqueue(new Foo(1));
+	queue.enqueue(new Foo(2));
+	queue.enqueue(new Foo(3));
+
+	assert(queue.dequeue()._foo == 1);
+	assert(queue.dequeue()._foo == 2);
+	assert(queue.dequeue()._foo == 3);
+}
+
