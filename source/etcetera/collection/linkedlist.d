@@ -588,7 +588,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final int opApply(ForeachAggregate!(T) dg)
+	final public int opApply(ForeachAggregate!(T) dg)
 	{
 		int result;
 
@@ -634,7 +634,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final int opApply(IndexedForeachAggregate!(T) dg)
+	final public int opApply(IndexedForeachAggregate!(T) dg)
 	{
 		int result;
 		size_t index;
@@ -681,7 +681,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final int opApplyReverse(ForeachAggregate!(T) dg)
+	final public int opApplyReverse(ForeachAggregate!(T) dg)
 	{
 		int result;
 
@@ -727,7 +727,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final int opApplyReverse(IndexedForeachAggregate!(T) dg)
+	final public int opApplyReverse(IndexedForeachAggregate!(T) dg)
 	{
 		int result;
 		size_t index = this.count - 1;
