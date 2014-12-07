@@ -60,6 +60,20 @@ queue.clear();
      </table></p>
 </div>
 </div>
+<h2><a name="Queue.count"></a>final const pure nothrow @property size_t <span class="symbol">count</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Get the number of items stored in the queue.
+</p>
+<h3>Return Value</h3><p>The number of items stored in the queue.</p>
+</div>
+</div>
+<h2><a name="Queue.empty"></a>final const pure nothrow @property bool <span class="symbol">empty</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Test if the queue is <span class="symbol">empty</span> or not.
+</p>
+<h3>Return Value</h3><p><strong>true</strong> if the queue is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
+</div>
+</div>
 <h2><a name="Queue.enqueue"></a>final nothrow void <span class="symbol">enqueue</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Add an item to the queue.
@@ -100,20 +114,6 @@ queue.clear();
 <h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If the queue is empty.</td></tr>
          <tr><td>OutOfMemoryError</td><td>If memory reallocation fails.</td></tr>
      </table></p>
-</div>
-</div>
-<h2><a name="Queue.count"></a>final const pure nothrow @property size_t <span class="symbol">count</span>();
-</h2>
-<div class="declaration-description"><div class="sections"><p>Get the number of items stored in the queue.
-</p>
-<h3>Return Value</h3><p>The number of items stored in the queue.</p>
-</div>
-</div>
-<h2><a name="Queue.empty"></a>final const pure nothrow @property bool <span class="symbol">empty</span>();
-</h2>
-<div class="declaration-description"><div class="sections"><p>Test if the queue is <span class="symbol">empty</span> or not.
-</p>
-<h3>Return Value</h3><p><strong>true</strong> if the queue is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
 </div>
 </div>
 <h2><a name="Queue.contains"></a>final bool <span class="symbol">contains</span>(T item);

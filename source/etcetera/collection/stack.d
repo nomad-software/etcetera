@@ -29,17 +29,12 @@ class Stack(T)
 	private T* _pointer;
 
 	/**
-	 * Return value for the pop method.
-	 */
-	private T _popped;
-
-	/**
 	 * The minimum size in bytes that the stack will allocate.
 	 */
 	private immutable size_t _minSize;
 
 	/**
-	 * The current size of the stack.
+	 * The current size in bytes of the stack.
 	 */
 	private size_t _size;
 
@@ -84,6 +79,40 @@ class Stack(T)
 		}
 
 		this._pointer = this._data - 1;
+	}
+
+	/**
+	 * Get the number of items stored in the stack.
+	 *
+	 * Returns:
+	 *     The number of items stored in the stack.
+	 */
+	final public @property size_t count() const nothrow pure
+	{
+		return this._count;
+	}
+
+	/**
+	 * Test if the stack is empty or not.
+	 *
+	 * Returns:
+	 *     true if the stack is empty, false if not.
+	 */
+	final public @property bool empty() const nothrow pure
+	{
+		return (this._count == 0);
+	}
+
+	/**
+	 * The current item capacity of the stack. This will change if the stack 
+	 * reallocates more memory.
+	 *
+	 * Returns:
+	 *     The capacity of how many items the stack can hold.
+	 */
+	final private @property size_t capacity() const nothrow pure
+	{
+		return this._size / T.sizeof;
 	}
 
 	/**
@@ -155,12 +184,10 @@ class Stack(T)
 	{
 		assert(this.count > 0, "Stack empty, popping failed.");
 
+		static T popped;
+
 		this._count--;
-		this._popped = *this._pointer;
-
-		memset(this._pointer, 0, T.sizeof);
-
-		this._pointer--;
+		popped = *this._pointer;
 
 		if ((this._count <= (this.capacity / 2)) && ((this._size / 2) >= this._minSize))
 		{
@@ -168,30 +195,13 @@ class Stack(T)
 			this._data    = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
 			this._pointer = this._data + (this._count - 1);
 		}
+		else
+		{
+			memset(this._pointer, 0, T.sizeof);
+			this._pointer--;
+		}
 
-		return this._popped;
-	}
-
-	/**
-	 * Get the number of items stored in the stack.
-	 *
-	 * Returns:
-	 *     The number of items stored in the stack.
-	 */
-	final public @property size_t count() const nothrow pure
-	{
-		return this._count;
-	}
-
-	/**
-	 * Test if the stack is empty or not.
-	 *
-	 * Returns:
-	 *     true if the stack is empty, false if not.
-	 */
-	final public @property bool empty() const nothrow pure
-	{
-		return (this._count == 0);
+		return popped;
 	}
 
 	/**
@@ -241,18 +251,6 @@ class Stack(T)
 
 		this._pointer = this._data - 1;
 		this._count   = 0;
-	}
-
-	/**
-	 * The current item capacity of the stack. This will change if the stack 
-	 * reallocates more memory.
-	 *
-	 * Returns:
-	 *     The capacity of how many items the stack can hold.
-	 */
-	final private @property size_t capacity() const nothrow pure
-	{
-		return this._size / T.sizeof;
 	}
 }
 

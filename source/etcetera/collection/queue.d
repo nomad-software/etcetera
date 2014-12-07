@@ -44,17 +44,12 @@ class Queue(T)
 	private size_t _backOffset;
 
 	/**
-	 * Return value for the dequeue method.
-	 */
-	private T _dequeued;
-
-	/**
 	 * The minimum size in bytes that the queue will allocate.
 	 */
 	private immutable size_t _minSize;
 
 	/**
-	 * The current size of the queue.
+	 * The current size in bytes of the queue.
 	 */
 	private size_t _size;
 
@@ -100,6 +95,28 @@ class Queue(T)
 
 		this._front = this._data;
 		this._back  = this._data - 1;
+	}
+
+	/**
+	 * Get the number of items stored in the queue.
+	 *
+	 * Returns:
+	 *     The number of items stored in the queue.
+	 */
+	final public @property size_t count() const nothrow pure
+	{
+		return this._count;
+	}
+
+	/**
+	 * Test if the queue is empty or not.
+	 *
+	 * Returns:
+	 *     true if the queue is empty, false if not.
+	 */
+	final public @property bool empty() const nothrow pure
+	{
+		return (this._count == 0);
 	}
 
 	/**
@@ -186,8 +203,10 @@ class Queue(T)
 	{
 		assert(this._count > 0, "Queue empty, dequeuing failed.");
 
+		static T dequeued;
+
 		this._count--;
-		this._dequeued = *(this._front);
+		dequeued = *(this._front);
 
 		memset(this._front, 0, T.sizeof);
 
@@ -220,29 +239,7 @@ class Queue(T)
 			this._back  = this._data + (this.capacity - 1);
 		}
 
-		return this._dequeued;
-	}
-
-	/**
-	 * Get the number of items stored in the queue.
-	 *
-	 * Returns:
-	 *     The number of items stored in the queue.
-	 */
-	final public @property size_t count() const nothrow pure
-	{
-		return this._count;
-	}
-
-	/**
-	 * Test if the queue is empty or not.
-	 *
-	 * Returns:
-	 *     true if the queue is empty, false if not.
-	 */
-	final public @property bool empty() const nothrow pure
-	{
-		return (this._count == 0);
+		return dequeued;
 	}
 
 	/**

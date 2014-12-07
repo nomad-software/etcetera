@@ -60,6 +60,20 @@ stack.clear();
      </table></p>
 </div>
 </div>
+<h2><a name="Stack.count"></a>final const pure nothrow @property size_t <span class="symbol">count</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Get the number of items stored in the stack.
+</p>
+<h3>Return Value</h3><p>The number of items stored in the stack.</p>
+</div>
+</div>
+<h2><a name="Stack.empty"></a>final const pure nothrow @property bool <span class="symbol">empty</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Test if the stack is <span class="symbol">empty</span> or not.
+</p>
+<h3>Return Value</h3><p><strong>true</strong> if the stack is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
+</div>
+</div>
 <h2><a name="Stack.push"></a>final nothrow void <span class="symbol">push</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Push an item onto the stack.
@@ -100,20 +114,6 @@ stack.clear();
 <h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If the stack is empty.</td></tr>
          <tr><td>OutOfMemoryError</td><td>If memory reallocation fails.</td></tr>
      </table></p>
-</div>
-</div>
-<h2><a name="Stack.count"></a>final const pure nothrow @property size_t <span class="symbol">count</span>();
-</h2>
-<div class="declaration-description"><div class="sections"><p>Get the number of items stored in the stack.
-</p>
-<h3>Return Value</h3><p>The number of items stored in the stack.</p>
-</div>
-</div>
-<h2><a name="Stack.empty"></a>final const pure nothrow @property bool <span class="symbol">empty</span>();
-</h2>
-<div class="declaration-description"><div class="sections"><p>Test if the stack is <span class="symbol">empty</span> or not.
-</p>
-<h3>Return Value</h3><p><strong>true</strong> if the stack is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
 </div>
 </div>
 <h2><a name="Stack.contains"></a>final bool <span class="symbol">contains</span>(T item);
