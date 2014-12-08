@@ -21,7 +21,7 @@
 <h3>Examples</h3><p><pre>
 <span class="keyword">class</span> MaxHeap : <span class="symbol">BinaryHeap</span>!(<span class="keyword">int</span>)
 {
-	<span class="keyword">override</span> <span class="keyword">public</span> <span class="keyword">int</span> compare(<span class="keyword">int</span> item1, <span class="keyword">int</span> item2) <span class="keyword">const</span> <span class="keyword">pure</span> <span class="keyword">nothrow</span>
+	<span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">public</span> <span class="keyword">int</span> compare(<span class="keyword">int</span> item1, <span class="keyword">int</span> item2) <span class="keyword">const</span> <span class="keyword">pure</span> <span class="keyword">nothrow</span>
 	{
 		<span class="keyword">return</span> item1 - item2;
 	}

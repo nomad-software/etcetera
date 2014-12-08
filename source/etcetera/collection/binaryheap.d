@@ -257,109 +257,117 @@ abstract class BinaryHeap(T)
 	}
 
 	/**
-	 * Sift items up through the heap. This method uses the compare method for 
-	 * all comparisons.
+	 * Sift child items up through the heap if they are greater than their 
+	 * parents. This method uses the compare method for all comparisons.
 	 *
 	 * Params:
-	 *     position = The position of the item to sift up. The position must 
+	 *     childIndex = The index of the item to sift up. The index must 
 	 *     contain a child item.
 	 */
-	final private void siftUp(size_t position) nothrow
+	final private void siftUp(size_t childIndex) nothrow
 	{
 		static T parent;
 		static T child;
+		static size_t parentIndex;
 
-		if (position > 0)
+		if (childIndex > 0)
 		{
-			size_t parentPosition;
-
-			if (position > 2)
+			if (childIndex > 2)
 			{
-				if (position % 2 == 0)
+				if (childIndex % 2 == 0)
 				{
-					parentPosition = (position - 2) / 2;
+					parentIndex = (childIndex - 2) / 2;
 				}
 				else
 				{
-					parentPosition = (position - 1) / 2;
+					parentIndex = (childIndex - 1) / 2;
 				}
 			}
 			else
 			{
-				parentPosition = 0;
+				parentIndex = 0;
 			}
 
-			parent = *(this._data + parentPosition);
-			child  = *(this._data + position);
+			parent = *(this._data + parentIndex);
+			child  = *(this._data + childIndex);
 
 			if (this.compare(child, parent) > 0)
 			{
-				*(this._data + parentPosition) = child;
-				*(this._data + position)       = parent;
+				*(this._data + parentIndex) = child;
+				*(this._data + childIndex)  = parent;
 
-				if (parentPosition > 0)
+				if (parentIndex > 0)
 				{
-					this.siftUp(parentPosition);
+					this.siftUp(parentIndex);
 				}
 			}
 		}
 	}
 
 	/**
-	 * Sift items down through the heap. This method uses the compare method for 
-	 * all comparisons.
+	 * Sift parent items down through the heap if they are lesser than their 
+	 * children. This method uses the compare method for all comparisons.
 	 *
 	 * Params:
-	 *     position = The position of the item to sift down. The position must 
+	 *     parentIndex = The index of the item to sift down. The index must 
 	 *     contain a parent item.
 	 */
-	final private void siftDown(size_t position) nothrow
+	final private void siftDown(size_t parentIndex) nothrow
 	{
 		static T parent;
 		static T child1;
 		static T child2;
+		static size_t child1Index;
+		static size_t child2Index;
 
-		if (this._count <= (2 * position) + 1)
+		child1Index = (2 * parentIndex) + 1;
+		child2Index = (2 * parentIndex) + 2;
+
+		// The parent has no children.
+		if (this._count <= child1Index)
 		{
 			return;
 		}
-		else if (this._count == (2 * position) + 2)
+		// The parent has one child.
+		else if (this._count == child2Index)
 		{
-			parent = *(this._data + position);
-			child1 = *(this._data + ((2 * position) + 1));
+			parent = *(this._data + parentIndex);
+			child1 = *(this._data + child1Index);
 
 			if (this.compare(child1, parent) > 0)
 			{
-				*(this._data + position)             = child1;
-				*(this._data + ((2 * position) + 1)) = parent;
+				*(this._data + parentIndex) = child1;
+				*(this._data + child1Index) = parent;
 
-				this.siftDown((2 * position) + 1);
+				this.siftDown(child1Index);
 			}
 		}
+		// The parent has two children.
 		else
 		{
-			parent = *(this._data + position);
-			child1 = *(this._data + ((2 * position) + 1));
-			child2 = *(this._data + ((2 * position) + 2));
+			parent = *(this._data + parentIndex);
+			child1 = *(this._data + child1Index);
+			child2 = *(this._data + child2Index);
 
+			// Compare the parent against the greater child.
 			if (this.compare(child1, child2) > 0)
 			{
 				if (this.compare(child1, parent))
 				{
-					*(this._data + position)             = child1;
-					*(this._data + ((2 * position) + 1)) = parent;
+					*(this._data + parentIndex) = child1;
+					*(this._data + child1Index) = parent;
 
-					this.siftDown((2 * position) + 1);
+					this.siftDown(child1Index);
 				}
 			}
 			else
 			{
 				if (this.compare(child2, parent))
 				{
-					*(this._data + position)             = child2;
-					*(this._data + ((2 * position) + 2)) = parent;
+					*(this._data + parentIndex) = child2;
+					*(this._data + child2Index) = parent;
 
-					this.siftDown((2 * position) + 2);
+					this.siftDown(child2Index);
 				}
 			}
 		}
@@ -388,7 +396,7 @@ unittest
 {
 	class MaxHeap : BinaryHeap!(int)
 	{
-		override public int compare(int item1, int item2) const pure nothrow
+		final override public int compare(int item1, int item2) const pure nothrow
 		{
 			return item1 - item2;
 		}
@@ -418,7 +426,7 @@ unittest
 {
 	class MaxHeap : BinaryHeap!(int)
 	{
-		override public int compare(int item1, int item2) const pure nothrow
+		final override public int compare(int item1, int item2) const pure nothrow
 		{
 			return item1 - item2;
 		}
@@ -481,7 +489,7 @@ unittest
 			super(minCapacity);
 		}
 
-		override public int compare(byte item1, byte item2) const pure nothrow
+		final override public int compare(byte item1, byte item2) const pure nothrow
 		{
 			return item1 - item2;
 		}
@@ -564,7 +572,7 @@ unittest
 
 	class PriorityQueue : BinaryHeap!(Person)
 	{
-		override public int compare(Person item1, Person item2) const pure nothrow
+		final override public int compare(Person item1, Person item2) const pure nothrow
 		{
 			return item1.priority - item2.priority;
 		}
