@@ -15,19 +15,19 @@
 </p>
 <h3>License</h3><p>MIT. See LICENSE for full details.</p>
 </div>
-<div class="module-members"><h2><a name="BinaryHeap"></a>class <span class="symbol">BinaryHeap</span>(T);
+<div class="module-members"><h2><a name="BinaryHeap"></a>class <span class="symbol">BinaryHeap</span>(T, alias pred) if (is(typeof(binaryFun!pred(T.init, T.init)) == bool));
 </h2>
-<div class="declaration-description"><div class="sections"><p>A abstract generic binary heap implementation.</p>
+<div class="declaration-description"><div class="sections"><p>A generic binary heap implementation.
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>T</td>
+<td>The type stored in the heap.</td></tr>
+<tr><td>pred</td>
+<td>A predicate that returns <strong>true</strong> if the first parameter is
+     greater than the second. This predicate defines the sorting order
+     between the heap items and is called during insertion and extraction.</td></tr>
+</table>
 <h3>Examples</h3><p><pre>
-<span class="keyword">class</span> MaxHeap : <span class="symbol">BinaryHeap</span>!(<span class="keyword">int</span>)
-{
-	<span class="keyword">final</span> <span class="keyword">override</span> <span class="keyword">public</span> <span class="keyword">int</span> compare(<span class="keyword">int</span> item1, <span class="keyword">int</span> item2) <span class="keyword">const</span> <span class="keyword">pure</span> <span class="keyword">nothrow</span>
-	{
-		<span class="keyword">return</span> item1 - item2;
-	}
-}
-
-<span class="keyword">auto</span> heap = <span class="keyword">new</span> MaxHeap();
+<span class="keyword">auto</span> heap = <span class="keyword">new</span> <span class="symbol">BinaryHeap</span>!(<span class="keyword">int</span>, <span class="string">"a &gt; b"</span>);
 heap.insert(1);
 heap.insert(3);
 heap.insert(2);
@@ -144,22 +144,6 @@ heap.clear();
 </p>
 <h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>OutOfMemoryError</td><td>If memory reallocation fails.</td></tr>
      </table></p>
-</div>
-</div>
-<h2><a name="BinaryHeap.compare"></a>abstract const pure nothrow int <span class="symbol">compare</span>(T item1, T item2);
-</h2>
-<div class="declaration-description"><div class="sections"><p>This method defines the sorting order between the heap items and is
- called during insertion and extraction. This method is abstract and
- needs implementing in the extending type.
-</p>
-<h3>Parameters</h3><table class="parameter-list"><tr><td>T item1</td>
-<td>The first item.</td></tr>
-<tr><td>T item2</td>
-<td>The second item.</td></tr>
-</table>
-<h3>Return Value</h3><p>An integer representing the sorting order between the two items. The
-     result of the comparison is a positive integer if item1 is greater
-     than item2, 0 if they are equal, negative otherwise.</p>
 </div>
 </div>
 </div>

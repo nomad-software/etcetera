@@ -15,6 +15,9 @@ import std.traits;
 
 /**
  * A generic first-in-first-out (FIFO) queue implementation.
+ *
+ * Params:
+ *     T = The type stored in the queue.
  */
 class Queue(T)
 {

@@ -15,6 +15,9 @@ import std.traits;
 
 /**
  * A generic last-in-first-out (LIFO) stack implementation.
+ *
+ * Params:
+ *     T = The type stored in the stack.
  */
 class Stack(T)
 {

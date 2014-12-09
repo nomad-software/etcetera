@@ -11,13 +11,25 @@ module etcetera.collection.binaryheap;
  */
 import core.memory;
 import core.stdc.string : memset;
+import std.functional;
 import std.traits;
 
 /**
- * A abstract generic binary heap implementation.
+ * A generic binary heap implementation.
+ *
+ * Params:
+ *     T = The type stored in the heap.
+ *     pred = A predicate that returns true if the first parameter is 
+ *     greater than the second. This predicate defines the sorting order 
+ *     between the heap items and is called during insertion and extraction.
  */
-abstract class BinaryHeap(T)
+class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) == bool))
 {
+	/**
+	 * The comparison method.
+	 */
+	private alias greaterFirst = binaryFun!(pred);
+
 	/**
 	 * A pointer to the heap data.
 	 */
@@ -258,7 +270,7 @@ abstract class BinaryHeap(T)
 
 	/**
 	 * Sift child items up through the heap if they are greater than their 
-	 * parents. This method uses the compare method for all comparisons.
+	 * parents.
 	 *
 	 * Params:
 	 *     childIndex = The index of the item to sift up. The index must 
@@ -291,7 +303,7 @@ abstract class BinaryHeap(T)
 			parent = *(this._data + parentIndex);
 			child  = *(this._data + childIndex);
 
-			if (this.compare(child, parent) > 0)
+			if (greaterFirst(child, parent))
 			{
 				*(this._data + parentIndex) = child;
 				*(this._data + childIndex)  = parent;
@@ -306,7 +318,7 @@ abstract class BinaryHeap(T)
 
 	/**
 	 * Sift parent items down through the heap if they are lesser than their 
-	 * children. This method uses the compare method for all comparisons.
+	 * children.
 	 *
 	 * Params:
 	 *     parentIndex = The index of the item to sift down. The index must 
@@ -334,7 +346,7 @@ abstract class BinaryHeap(T)
 			parent = *(this._data + parentIndex);
 			child1 = *(this._data + child1Index);
 
-			if (this.compare(child1, parent) > 0)
+			if (greaterFirst(child1, parent))
 			{
 				*(this._data + parentIndex) = child1;
 				*(this._data + child1Index) = parent;
@@ -350,9 +362,9 @@ abstract class BinaryHeap(T)
 			child2 = *(this._data + child2Index);
 
 			// Compare the parent against the greater child.
-			if (this.compare(child1, child2) > 0)
+			if (greaterFirst(child1, child2))
 			{
-				if (this.compare(child1, parent))
+				if (greaterFirst(child1, parent))
 				{
 					*(this._data + parentIndex) = child1;
 					*(this._data + child1Index) = parent;
@@ -362,7 +374,7 @@ abstract class BinaryHeap(T)
 			}
 			else
 			{
-				if (this.compare(child2, parent))
+				if (greaterFirst(child2, parent))
 				{
 					*(this._data + parentIndex) = child2;
 					*(this._data + child2Index) = parent;
@@ -372,37 +384,12 @@ abstract class BinaryHeap(T)
 			}
 		}
 	}
-
-	/**
-	 * This method defines the sorting order between the heap items and is 
-	 * called during insertion and extraction. This method is abstract and 
-	 * needs implementing in the extending type.
-	 *
-	 * Params:
-	 *     item1  = The first item.
-	 *     item2 = The second item.
-	 *
-	 * Returns:
-	 *     An integer representing the sorting order between the two items. The 
-	 *     result of the comparison is a positive integer if item1 is greater 
-	 *     than item2, 0 if they are equal, negative otherwise.
-	 *
-	 */
-	abstract public int compare(T item1, T item2) const pure nothrow;
 }
 
 ///
 unittest
 {
-	class MaxHeap : BinaryHeap!(int)
-	{
-		final override public int compare(int item1, int item2) const pure nothrow
-		{
-			return item1 - item2;
-		}
-	}
-
-	auto heap = new MaxHeap();
+	auto heap = new BinaryHeap!(int, "a > b");
 	heap.insert(1);
 	heap.insert(3);
 	heap.insert(2);
@@ -424,15 +411,7 @@ unittest
 
 unittest
 {
-	class MaxHeap : BinaryHeap!(int)
-	{
-		final override public int compare(int item1, int item2) const pure nothrow
-		{
-			return item1 - item2;
-		}
-	}
-
-	auto heap = new MaxHeap();
+	auto heap = new BinaryHeap!(int, (int a, int b) => a > b);
 
 	assert(heap.empty);
 	assert(heap.count == 0);
@@ -482,20 +461,7 @@ unittest
 
 unittest
 {
-	class MaxHeap : BinaryHeap!(byte)
-	{
-		final public this(size_t minCapacity = 10_000) nothrow
-		{
-			super(minCapacity);
-		}
-
-		final override public int compare(byte item1, byte item2) const pure nothrow
-		{
-			return item1 - item2;
-		}
-	}
-
-	auto heap = new MaxHeap(4);
+	auto heap = new BinaryHeap!(int, delegate(int a, int b){return a > b;})(4);
 
 	assert(heap.empty);
 	assert(heap.count == 0);
@@ -570,24 +536,16 @@ unittest
 		}
 	}
 
-	class PriorityQueue : BinaryHeap!(Person)
-	{
-		final override public int compare(Person item1, Person item2) const pure nothrow
-		{
-			return item1.priority - item2.priority;
-		}
-	}
+	auto priorityQueue = new BinaryHeap!(Person, "a.priority > b.priority");
 
-	auto queue = new PriorityQueue();
+	priorityQueue.insert(new Person(1, "Foo"));
+	priorityQueue.insert(new Person(4, "Bar"));
+	priorityQueue.insert(new Person(2, "Baz"));
+	priorityQueue.insert(new Person(3, "Quxx"));
 
-	queue.insert(new Person(1, "Foo"));
-	queue.insert(new Person(4, "Bar"));
-	queue.insert(new Person(2, "Baz"));
-	queue.insert(new Person(3, "Quxx"));
-
-	assert(queue.extract().name == "Bar");
-	assert(queue.extract().name == "Quxx");
-	assert(queue.extract().name == "Baz");
-	assert(queue.extract().name == "Foo");
+	assert(priorityQueue.extract().name == "Bar");
+	assert(priorityQueue.extract().name == "Quxx");
+	assert(priorityQueue.extract().name == "Baz");
+	assert(priorityQueue.extract().name == "Foo");
 }
 

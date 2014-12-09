@@ -15,6 +15,9 @@ import std.traits;
 
 /**
  * A node in the linked list.
+ *
+ * Params:
+ *     T = The type stored in each node in the list.
  */
 private struct Node(T)
 {
@@ -37,6 +40,9 @@ private struct Node(T)
 /**
  * Template defining a delegate suitable to be used as a ForeachAggregate.
  *
+ * Params:
+ *     T = The type stored in each node in the list.
+ *
  * See_Also:
  *    $(LINK http://dlang.org/statement.html#ForeachStatement)
  */
@@ -49,6 +55,9 @@ private template ForeachAggregate(T)
  * Template defining a delegate suitable to be used as an indexed 
  * ForeachAggregate.
  *
+ * Params:
+ *     T = The type stored in each node in the list.
+ *
  * See_Also:
  *    $(LINK http://dlang.org/statement.html#ForeachStatement)
  */
@@ -58,6 +67,9 @@ private template IndexedForeachAggregate(T)
 }
 /**
  * A generic doubly linked list implementation.
+ *
+ * Params:
+ *     T = The type stored in each node in the list.
  */
 class LinkedList(T)
 {
