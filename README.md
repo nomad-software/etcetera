@@ -1,6 +1,8 @@
 # Etcetera
 **A common type and function library for D language programs**
 
+[![Build Status](https://travis-ci.org/nomad-software/etcetera.svg?branch=master)](https://travis-ci.org/nomad-software/etcetera)
+
 ---
 
 ## Contents
