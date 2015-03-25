@@ -303,7 +303,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 			parent = *(this._data + parentIndex);
 			child  = *(this._data + childIndex);
 
-			if (greaterFirst(child, parent))
+			if (this.greaterFirst(child, parent))
 			{
 				*(this._data + parentIndex) = child;
 				*(this._data + childIndex)  = parent;
@@ -346,7 +346,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 			parent = *(this._data + parentIndex);
 			child1 = *(this._data + child1Index);
 
-			if (greaterFirst(child1, parent))
+			if (this.greaterFirst(child1, parent))
 			{
 				*(this._data + parentIndex) = child1;
 				*(this._data + child1Index) = parent;
@@ -362,9 +362,9 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 			child2 = *(this._data + child2Index);
 
 			// Compare the parent against the greater child.
-			if (greaterFirst(child1, child2))
+			if (this.greaterFirst(child1, child2))
 			{
-				if (greaterFirst(child1, parent))
+				if (this.greaterFirst(child1, parent))
 				{
 					*(this._data + parentIndex) = child1;
 					*(this._data + child1Index) = parent;
@@ -374,7 +374,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 			}
 			else
 			{
-				if (greaterFirst(child2, parent))
+				if (this.greaterFirst(child2, parent))
 				{
 					*(this._data + parentIndex) = child2;
 					*(this._data + child2Index) = parent;
