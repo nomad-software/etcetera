@@ -525,7 +525,6 @@ class LinkedList(T)
 	 *
 	 * assert(list.byValue.canFind("Baz"));
 	 * assert(list.byValue.retro.map!(toLower).equal(["bar", "foo", "baz", "qux"]));
-	 * assert(list.byValue.array.sort == ["Bar", "Baz", "Foo", "Qux"]);
 	 * ---
 	 */
 	final public auto byValue() nothrow pure
