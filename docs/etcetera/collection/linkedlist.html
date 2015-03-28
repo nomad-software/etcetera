@@ -39,7 +39,6 @@ list.insertLast(<span class="string">"Bar"</span>);
 
 <span class="keyword">assert</span>(list.byValue.canFind(<span class="string">"Baz"</span>));
 <span class="keyword">assert</span>(list.byValue.retro.equal([<span class="string">"Bar"</span>, <span class="string">"Foo"</span>, <span class="string">"Baz"</span>, <span class="string">"Qux"</span>]));
-<span class="keyword">assert</span>(list.byValue.array.sort == [<span class="string">"Bar"</span>, <span class="string">"Baz"</span>, <span class="string">"Foo"</span>, <span class="string">"Qux"</span>]);
 
 list.clear();
 <span class="keyword">assert</span>(list.empty);

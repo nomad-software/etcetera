@@ -777,7 +777,6 @@ unittest
 
 	assert(list.byValue.canFind("Baz"));
 	assert(list.byValue.retro.equal(["Bar", "Foo", "Baz", "Qux"]));
-	assert(list.byValue.array.sort == ["Bar", "Baz", "Foo", "Qux"]);
 
 	list.clear();
 	assert(list.empty);
