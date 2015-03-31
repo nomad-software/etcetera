@@ -1,5 +1,5 @@
 /**
- * Collections module.
+ * Collection module.
  *
  * License:
  *     MIT. See LICENSE for full details.

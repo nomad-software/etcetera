@@ -3,6 +3,16 @@
  *
  * License:
  *     MIT. See LICENSE for full details.
+ *
+ * Data_types:
+ *     $(P
+ *         $(PARAM_TABLE
+ *             $(PARAM_ROW $(LINK2 ./binaryheap.html, BinaryHeap), A generic binary heap implementation.)
+ *             $(PARAM_ROW $(LINK2 ./linkedlist.html, LinkedList), A generic doubly linked list implementation.)
+ *             $(PARAM_ROW $(LINK2 ./queue.html, Queue), A generic first-in-first-out (FIFO) queue implementation.)
+ *             $(PARAM_ROW $(LINK2 ./stack.html, Stack), A generic last-in-first-out (LIFO) stack implementation.)
+ *         )
+ *     )
  */
 module etcetera.collection;
 

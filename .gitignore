@@ -1,5 +1,4 @@
 .dub/*
 build/*
 __main.html
-package.html
 dub.selections.json
