@@ -13,6 +13,9 @@ import core.memory;
 import core.stdc.string : memcpy, memmove, memset;
 import std.traits;
 
+@trusted:
+nothrow:
+
 /**
  * A generic first-in-first-out (FIFO) queue implementation.
  *
@@ -681,7 +684,7 @@ unittest
 	{
 		private int _foo;
 
-		public this(int foo)
+		public this(int foo) nothrow
 		{
 			this._foo = foo;
 		}

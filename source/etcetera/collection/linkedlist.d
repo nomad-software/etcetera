@@ -13,6 +13,9 @@ import core.memory;
 import std.range;
 import std.traits;
 
+@trusted:
+nothrow:
+
 /**
  * A node in the linked list.
  *
@@ -1140,7 +1143,7 @@ unittest
 	{
 		private int _foo;
 
-		public this(int foo)
+		public this(int foo) nothrow
 		{
 			this._foo = foo;
 		}

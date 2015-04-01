@@ -13,6 +13,9 @@ import core.memory;
 import core.stdc.string : memset;
 import std.traits;
 
+@trusted:
+nothrow:
+
 /**
  * A generic last-in-first-out (LIFO) stack implementation.
  *
@@ -367,7 +370,7 @@ unittest
 	{
 		private int _foo;
 
-		public this(int foo)
+		public this(int foo) nothrow
 		{
 			this._foo = foo;
 		}

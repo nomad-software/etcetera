@@ -14,6 +14,9 @@ import core.stdc.string : memset;
 import std.functional;
 import std.traits;
 
+@trusted:
+nothrow:
+
 /**
  * A generic binary heap implementation.
  *
@@ -529,7 +532,7 @@ unittest
 		public int priority;
 		public string name;
 
-		this(int priority, string name)
+		public this(int priority, string name) nothrow
 		{
 			this.priority = priority;
 			this.name     = name;
