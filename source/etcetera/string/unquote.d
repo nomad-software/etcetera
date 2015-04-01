@@ -27,15 +27,14 @@ import std.typecons;
 public T unquote(T)(T text) @safe pure if (isSomeString!(T))
 {
 	auto quotes = tuple('"', '\'', '`');
+	auto start  = text.startsWith(quotes.expand);
+	auto end    = text.endsWith(quotes.expand);
 
-	if (text.startsWith(quotes.expand) == text.endsWith(quotes.expand))
+	if ((start && end) && (start == end))
 	{
-		return text.strip!(a => a.among(quotes.expand) > 0);
+		return text[1 .. $-1];
 	}
-	else
-	{
-		return text;
-	}
+	return text;
 }
 
 ///
@@ -49,6 +48,7 @@ unittest
 unittest
 {
 	auto edgeCases = [
+		[`""`, ""],
 		["naked", "naked"],
 
 		[`quotes "in the" middle`, `quotes "in the" middle`],
@@ -74,10 +74,24 @@ unittest
 
 unittest
 {
+	string[][] utf8 = [
+		[`"日本語"`, "日本語"],
+		["'日本語'", "日本語"],
+		["`日本語`", "日本語"],
+	];
+
+	foreach (test; utf8)
+	{
+		assert(unquote(test[0]) == test[1]);
+	}
+}
+
+unittest
+{
 	wstring[][] utf16 = [
-		[`"Lorem ipsum dolor sit amet."`w, "Lorem ipsum dolor sit amet."w],
-		["'Lorem ipsum dolor sit amet.'"w, "Lorem ipsum dolor sit amet."w],
-		["`Lorem ipsum dolor sit amet.`"w, "Lorem ipsum dolor sit amet."w],
+		[`"日本語"`w, "日本語"w],
+		["'日本語'"w, "日本語"w],
+		["`日本語`"w, "日本語"w],
 	];
 
 	foreach (test; utf16)
@@ -89,9 +103,9 @@ unittest
 unittest
 {
 	dstring[][] utf32 = [
-		[`"Lorem ipsum dolor sit amet."`d, "Lorem ipsum dolor sit amet."d],
-		["'Lorem ipsum dolor sit amet.'"d, "Lorem ipsum dolor sit amet."d],
-		["`Lorem ipsum dolor sit amet.`"d, "Lorem ipsum dolor sit amet."d],
+		[`"日本語"`d, "日本語"d],
+		["'日本語'"d, "日本語"d],
+		["`日本語`"d, "日本語"d],
 	];
 
 	foreach (test; utf32)
