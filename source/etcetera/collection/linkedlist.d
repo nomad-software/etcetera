@@ -334,7 +334,7 @@ class LinkedList(T)
 
 			if (index > this._count / 2)
 			{
-				size_t listIndex = this.count - 1;
+				size_t listIndex = this._count - 1;
 				for (auto listNode = this._last; listNode !is null; listIndex--, listNode = (*listNode).prev)
 				{
 					if (listIndex == index)
@@ -400,7 +400,7 @@ class LinkedList(T)
 		{
 			if (index >= this._count / 2)
 			{
-				size_t listIndex = this.count - 1;
+				size_t listIndex = this._count - 1;
 				for (auto listNode = this._last; listNode !is null; listIndex--, listNode = (*listNode).prev)
 				{
 					if (listIndex == index)
@@ -421,7 +421,7 @@ class LinkedList(T)
 				}
 			}
 		}
-		assert(0, "Error accessing linked list.");
+		assert(false, "Error accessing linked list.");
 	}
 
 	/**
@@ -457,7 +457,7 @@ class LinkedList(T)
 		{
 			if (index >= this._count / 2)
 			{
-				size_t listIndex = this.count - 1;
+				size_t listIndex = this._count - 1;
 				for (auto listNode = this._last; listNode !is null; listIndex--, listNode = (*listNode).prev)
 				{
 					if (listIndex == index)
@@ -744,7 +744,7 @@ class LinkedList(T)
 	final public int opApplyReverse(IndexedForeachAggregate!(T) dg)
 	{
 		int result;
-		size_t index = this.count - 1;
+		size_t index = this._count - 1;
 
 		for (auto node = this._last; node !is null; index--, node = (*node).prev)
 		{

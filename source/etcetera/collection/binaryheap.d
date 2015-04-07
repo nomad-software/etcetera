@@ -176,7 +176,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	 */
 	final public T peek() nothrow pure
 	{
-		assert(this.count > 0, "Heap empty, peeking failed.");
+		assert(this._count, "Heap empty, peeking failed.");
 
 		return *this._data;
 	}
@@ -196,7 +196,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	 */
 	final public T extract() nothrow
 	{
-		assert(this.count > 0, "Heap empty, extracting failed.");
+		assert(this._count, "Heap empty, extracting failed.");
 
 		T extracted;
 

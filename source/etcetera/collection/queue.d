@@ -185,7 +185,7 @@ class Queue(T)
 	 */
 	final public T peek() nothrow pure
 	{
-		assert(this._count > 0, "Queue empty, peeking failed.");
+		assert(this._count, "Queue empty, peeking failed.");
 
 		return *this._front;
 	}
@@ -207,7 +207,7 @@ class Queue(T)
 	 */
 	final public T dequeue() nothrow
 	{
-		assert(this._count > 0, "Queue empty, dequeuing failed.");
+		assert(this._count, "Queue empty, dequeuing failed.");
 
 		static T dequeued;
 

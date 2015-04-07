@@ -139,7 +139,7 @@ class Stack(T)
 	{
 		this._pointer++;
 
-		if (this.count == this.capacity)
+		if (this._count == this.capacity)
 		{
 			this._size   *= 2;
 			this._data    = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
@@ -166,7 +166,7 @@ class Stack(T)
 	 */
 	final public T peek() nothrow pure
 	{
-		assert(this.count > 0, "Stack empty, peeking failed.");
+		assert(this._count, "Stack empty, peeking failed.");
 
 		return *this._pointer;
 	}
@@ -188,7 +188,7 @@ class Stack(T)
 	 */
 	final public T pop() nothrow
 	{
-		assert(this.count > 0, "Stack empty, popping failed.");
+		assert(this._count, "Stack empty, popping failed.");
 
 		static T popped;
 
