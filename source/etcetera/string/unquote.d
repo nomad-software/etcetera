@@ -9,9 +9,7 @@ module etcetera.string.unquote;
 /**
  * Imports.
  */
-import std.algorithm;
-import std.traits;
-import std.typecons;
+import std.traits : isSomeString;
 
 /**
  * Remove single, double or back quotes from around a passed string. Strings 
@@ -24,13 +22,9 @@ import std.typecons;
  *     If the above rules apply the unquoted string, otherwise it's returned 
  *     unchanged.
  */
-public T unquote(T)(T text) @safe pure if (isSomeString!(T))
+public T unquote(T)(T text) @nogc @safe nothrow pure if (isSomeString!(T))
 {
-	auto quotes = tuple('"', '\'', '`');
-	auto start  = text.startsWith(quotes.expand);
-	auto end    = text.endsWith(quotes.expand);
-
-	if ((start && end) && (start == end))
+	if ((text[0] == '"' || text[0] == '\'' || text[0] == '`') && text[0] == text[text.length - 1])
 	{
 		return text[1 .. $-1];
 	}
