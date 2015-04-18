@@ -15,7 +15,7 @@
 </p>
 <h3>License</h3><p>MIT. See LICENSE for full details.</p>
 </div>
-<div class="module-members"><h2><a name="unquote"></a>pure @safe T <span class="symbol">unquote</span>(T)(T text) if (isSomeString!T);
+<div class="module-members"><h2><a name="unquote"></a>pure nothrow @nogc @safe T <span class="symbol">unquote</span>(T)(T text) if (isSomeString!T);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Remove single, double or back quotes from around a passed string. Strings
  will only be unquoted if they start and end with matching quotes.
