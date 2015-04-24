@@ -24,9 +24,12 @@ import std.traits : isSomeString;
  */
 public T unquote(T)(T text) @nogc @safe nothrow pure if (isSomeString!(T))
 {
-	if ((text[0] == '"' || text[0] == '\'' || text[0] == '`') && text[0] == text[text.length - 1])
+	if (text.length)
 	{
-		return text[1 .. $-1];
+		if ((text[0] == '"' || text[0] == '\'' || text[0] == '`') && text[0] == text[text.length - 1])
+		{
+			return text[1 .. $-1];
+		}
 	}
 	return text;
 }
