@@ -16,6 +16,7 @@
 			"buildOptions": ["deprecationErrors", "syntaxOnly", "warningsAsErrors"],
 			"dflags": ["-c", "-Ddtemp", "-op"],
 			"postBuildCommands": ["rm -rf docs", "mv temp/source docs", "rm -rf temp"],
+			"sourceFiles": ["source/etcetera/index.dd"],
 		},
 	}
 }
