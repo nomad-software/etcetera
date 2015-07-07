@@ -146,6 +146,30 @@ stack.clear();
      </table></p>
 </div>
 </div>
+<h2><a name="Stack.byValue"></a>final pure nothrow auto <span class="symbol">byValue</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Return a forward range to allow this stack to be using with various
+ other algorithms.
+</p>
+<h3>Return Value</h3><p>A forward range representing this stack.
+
+</p>
+<p><h3>Example:</h3>
+<pre><span class="keyword">import</span> std.algorithm;
+<span class="keyword">import</span> std.string;
+
+<span class="keyword">auto</span> stack = <span class="keyword">new</span> Stack!(string);
+
+stack.push(<span class="string">"Foo"</span>);
+stack.push(<span class="string">"Bar"</span>);
+stack.push(<span class="string">"Baz"</span>);
+
+<span class="keyword">assert</span>(stack.<span class="symbol">byValue</span>.canFind(<span class="string">"Baz"</span>));
+<span class="keyword">assert</span>(stack.<span class="symbol">byValue</span>.map!(toLower).array == [<span class="string">"baz"</span>, <span class="string">"bar"</span>, <span class="string">"foo"</span>]);
+</pre>
+</p>
+</div>
+</div>
 </div>
 </div>
 </div>
