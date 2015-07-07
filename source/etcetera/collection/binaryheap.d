@@ -14,9 +14,6 @@ import core.stdc.string : memset;
 import std.functional;
 import std.traits;
 
-@trusted:
-nothrow:
-
 /**
  * A generic binary heap implementation.
  *

@@ -13,9 +13,6 @@ import core.memory;
 import std.range;
 import std.traits;
 
-@trusted:
-nothrow:
-
 /**
  * A node in the linked list.
  *
@@ -51,7 +48,7 @@ private struct Node(T)
  */
 private template ForeachAggregate(T)
 {
-	alias int delegate(ref T) ForeachAggregate;
+	alias int delegate(ref T) nothrow ForeachAggregate;
 }
 
 /**
@@ -66,7 +63,7 @@ private template ForeachAggregate(T)
  */
 private template IndexedForeachAggregate(T)
 {
-	alias int delegate(ref size_t, ref T) IndexedForeachAggregate;
+	alias int delegate(ref size_t, ref T) nothrow IndexedForeachAggregate;
 }
 /**
  * A generic doubly linked list implementation.
@@ -602,7 +599,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(ForeachAggregate!(T) dg)
+	final public int opApply(ForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 
@@ -648,7 +645,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(IndexedForeachAggregate!(T) dg)
+	final public int opApply(IndexedForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 		size_t index;
@@ -695,7 +692,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApplyReverse(ForeachAggregate!(T) dg)
+	final public int opApplyReverse(ForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 
@@ -741,7 +738,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApplyReverse(IndexedForeachAggregate!(T) dg)
+	final public int opApplyReverse(IndexedForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 		size_t index = this._count - 1;

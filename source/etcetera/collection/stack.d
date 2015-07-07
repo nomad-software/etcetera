@@ -11,10 +11,8 @@ module etcetera.collection.stack;
  */
 import core.memory;
 import core.stdc.string : memset;
+import std.range;
 import std.traits;
-
-@trusted:
-nothrow:
 
 /**
  * A generic last-in-first-out (LIFO) stack implementation.
@@ -258,6 +256,61 @@ class Stack(T)
 		this._pointer = this._data - 1;
 		this._count   = 0;
 	}
+
+	/**
+	 * Return a forward range to allow this stack to be using with various 
+	 * other algorithms.
+	 *
+	 * Returns:
+	 *     A forward range representing this stack.
+	 *
+	 * Example:
+	 * ---
+	 * import std.algorithm;
+	 * import std.string;
+
+	 * auto stack = new Stack!(string);
+
+	 * stack.push("Foo");
+	 * stack.push("Bar");
+	 * stack.push("Baz");
+
+	 * assert(stack.byValue.canFind("Baz"));
+	 * assert(stack.byValue.map!(toLower).array == ["baz", "bar", "foo"]);
+	 * ---
+	 */
+	final public auto byValue() nothrow pure
+	{
+		static struct Result
+		{
+			private T* _data;
+			private T* _pointer;
+
+			public @property ref T front()
+			{
+				return *this._pointer;
+			}
+
+			public @property bool empty()
+			{
+				return this._pointer < this._data;
+			}
+
+			public void popFront()
+			{
+				this._pointer--;
+			}
+
+			public @property auto save()
+			{
+				return this;
+			}
+		}
+
+		static assert(isForwardRange!(Result));
+
+		return Result(this._data, this._pointer);
+	}
 }
 
 ///
@@ -385,5 +438,21 @@ unittest
 	assert(stack.pop()._foo == 3);
 	assert(stack.pop()._foo == 2);
 	assert(stack.pop()._foo == 1);
+}
+
+unittest
+{
+	import std.algorithm;
+	import std.string;
+
+	auto stack = new Stack!(string);
+
+	stack.push("Foo");
+	stack.push("Bar");
+	stack.push("Baz");
+
+	assert(stack.byValue.canFind("Baz"));
+	assert(stack.byValue.map!(toLower).array == ["baz", "bar", "foo"]);
+	assert(stack.byValue.save.array == ["Baz", "Bar", "Foo"]);
 }
 
