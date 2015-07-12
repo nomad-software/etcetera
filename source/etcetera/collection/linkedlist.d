@@ -10,6 +10,7 @@ module etcetera.collection.linkedlist;
  * Imports.
  */
 import core.memory;
+import etcetera.meta;
 import std.range;
 import std.traits;
 
@@ -37,34 +38,6 @@ private struct Node(T)
 	public T data;
 }
 
-/**
- * Template defining a delegate suitable to be used as a ForeachAggregate.
- *
- * Params:
- *     T = The type stored in each node in the list.
- *
- * See_Also:
- *    $(LINK http://dlang.org/statement.html#ForeachStatement)
- */
-private template ForeachAggregate(T)
-{
-	alias int delegate(ref T) nothrow ForeachAggregate;
-}
-
-/**
- * Template defining a delegate suitable to be used as an indexed 
- * ForeachAggregate.
- *
- * Params:
- *     T = The type stored in each node in the list.
- *
- * See_Also:
- *    $(LINK http://dlang.org/statement.html#ForeachStatement)
- */
-private template IndexedForeachAggregate(T)
-{
-	alias int delegate(ref size_t, ref T) nothrow IndexedForeachAggregate;
-}
 /**
  * A generic doubly linked list implementation.
  *
@@ -623,7 +596,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(ForeachAggregate!(T) dg) nothrow
+	final public int opApply(ForeachAggregate!(T) dg)
 	{
 		int result;
 
@@ -669,7 +642,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(IndexedForeachAggregate!(T) dg) nothrow
+	final public int opApply(IndexedForeachAggregate!(T) dg)
 	{
 		int result;
 		size_t index;
@@ -716,7 +689,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApplyReverse(ForeachAggregate!(T) dg) nothrow
+	final public int opApplyReverse(ForeachAggregate!(T) dg)
 	{
 		int result;
 
@@ -762,7 +735,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApplyReverse(IndexedForeachAggregate!(T) dg) nothrow
+	final public int opApplyReverse(IndexedForeachAggregate!(T) dg)
 	{
 		int result;
 		size_t index = this._count - 1;
