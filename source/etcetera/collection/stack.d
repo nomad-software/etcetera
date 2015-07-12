@@ -316,6 +316,9 @@ class Stack(T)
 ///
 unittest
 {
+	import std.algorithm;
+	import std.string;
+
 	auto stack = new Stack!(string);
 
 	stack.push("Foo");
@@ -325,6 +328,7 @@ unittest
 	assert(!stack.empty);
 	assert(stack.count == 3);
 	assert(stack.contains("Bar"));
+	assert(stack.byValue.map!(toLower).array == ["baz", "bar", "foo"]);
 
 	assert(stack.peek() == "Baz");
 	assert(stack.pop() == "Baz");
@@ -339,6 +343,8 @@ unittest
 
 unittest
 {
+	import std.algorithm;
+
 	auto stack = new Stack!(int);
 
 	assert(stack.empty);
@@ -358,6 +364,8 @@ unittest
 	assert(stack.count == limit);
 	assert(stack.contains(1));
 	assert(stack.contains(limit));
+	assert(stack.byValue.canFind(1));
+	assert(stack.byValue.canFind(limit));
 	assert(!stack.empty);
 	assert(stack.capacity == 1_280_000);
 
@@ -384,6 +392,8 @@ unittest
 	assert(stack.count == 0);
 	assert(!stack.contains(1));
 	assert(!stack.contains(limit));
+	assert(!stack.byValue.canFind(1));
+	assert(!stack.byValue.canFind(limit));
 	assert(stack.capacity == 10_000);
 }
 

@@ -488,6 +488,30 @@ class LinkedList(T)
 	}
 
 	/**
+	 * Check if a value is contained in the list.
+	 *
+	 * This is a simple linear search and can take quite some time with large 
+	 * lists.
+	 *
+	 * Params:
+	 *     item = The item to find in the list.
+	 *
+	 * Returns:
+	 *     true if the item is found on the list, false if not.
+	 */
+	final public bool contains(T item)
+	{
+		for (auto node = this._first; node !is null; node = (*node).next)
+		{
+			if (item == (*node).data)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Clears the list and deallocates all memory used by the nodes.
 	 */
 	final public void clear() nothrow
@@ -802,6 +826,8 @@ unittest
 
 	assert(list.last == limit);
 	assert(list.count == limit);
+	assert(list.contains(1));
+	assert(list.contains(limit));
 	assert(list.byValue.canFind(1));
 	assert(list.byValue.canFind(limit));
 	assert(!list.empty);
@@ -824,6 +850,8 @@ unittest
 
 	assert(list.first == limit);
 	assert(list.count == limit);
+	assert(list.contains(1));
+	assert(list.contains(limit));
 	assert(list.byValue.canFind(1));
 	assert(list.byValue.canFind(limit));
 	assert(!list.empty);
@@ -848,6 +876,8 @@ unittest
 
 	assert(list.empty);
 	assert(list.count == 0);
+	assert(!list.contains(1));
+	assert(!list.contains(limit));
 	assert(!list.byValue.canFind(1));
 	assert(!list.byValue.canFind(limit));
 }
