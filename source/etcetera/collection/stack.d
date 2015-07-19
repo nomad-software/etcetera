@@ -11,6 +11,7 @@ module etcetera.collection.stack;
  */
 import core.memory;
 import core.stdc.string : memset;
+import etcetera.meta;
 import std.range;
 import std.traits;
 
@@ -311,6 +312,97 @@ class Stack(T)
 
 		return Result(this._data, this._pointer);
 	}
+
+	/**
+	 * Enable forward iteration in foreach loops.
+	 *
+	 * Params:
+	 *     dg = A delegate that replaces the foreach loop.
+	 *
+	 * Returns:
+	 *     A return value to determine if the loop should continue.
+	 *
+	 * See_Also:
+	 *     $(LINK http://ddili.org/ders/d.en/foreach_opapply.html)
+	 *
+	 * Example:
+	 * ---
+	 * import std.stdio;
+	 *
+	 * auto stack = new Stack!(string);
+	 *
+	 * stack.push("Foo");
+	 * stack.push("Bar");
+	 * stack.push("Baz");
+	 *
+	 * foreach (value; stack)
+	 * {
+	 * 	writefln("%s", value);
+	 * }
+	 * ---
+	 */
+	final public int opApply(ForeachAggregate!(T) dg)
+	{
+		int result;
+
+		for (T* pointer = this._pointer; pointer >= this._data; pointer--)
+		{
+			result = dg(*pointer);
+
+			if (result)
+			{
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Enable forward iteration in foreach loops using an index.
+	 *
+	 * Params:
+	 *     dg = A delegate that replaces the foreach loop.
+	 *
+	 * Returns:
+	 *     A return value to determine if the loop should continue.
+	 *
+	 * See_Also:
+	 *     $(LINK http://ddili.org/ders/d.en/foreach_opapply.html)
+	 *
+	 * Example:
+	 * ---
+	 * import std.stdio;
+	 *
+	 * auto stack = new Stack!(string);
+	 *
+	 * stack.push("Foo");
+	 * stack.push("Bar");
+	 * stack.push("Baz");
+	 *
+	 * foreach (index, value; stack)
+	 * {
+	 * 	writefln("%s: %s", index, value);
+	 * }
+	 * ---
+	 */
+	final public int opApply(IndexedForeachAggregate!(T) dg)
+	{
+		int result;
+		size_t index;
+
+		for (T* pointer = this._pointer; pointer >= this._data; index++, pointer--)
+		{
+			result = dg(index, *pointer);
+
+			if (result)
+			{
+				break;
+			}
+		}
+
+		return result;
+	}
 }
 
 ///
@@ -464,5 +556,47 @@ unittest
 	assert(stack.byValue.canFind("Baz"));
 	assert(stack.byValue.map!(toLower).array == ["baz", "bar", "foo"]);
 	assert(stack.byValue.save.array == ["Baz", "Bar", "Foo"]);
+}
+
+unittest
+{
+	auto stack = new Stack!(string);
+
+	stack.push("Foo");
+	stack.push("Bar");
+	stack.push("Baz");
+	stack.push("Qux");
+
+	size_t counter;
+	auto data  = ["Qux", "Baz", "Bar", "Foo"];
+
+	foreach (value; stack.byValue)
+	{
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (value; stack.byValue.save)
+	{
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (value; stack)
+	{
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (index, value; stack)
+	{
+		assert(index == counter);
+		assert(value == data[counter++]);
+	}
+
+	assert(stack.pop() == "Qux");
+	assert(stack.pop() == "Baz");
+	assert(stack.pop() == "Bar");
+	assert(stack.pop() == "Foo");
 }
 
