@@ -11,6 +11,7 @@ module etcetera.collection.queue;
  */
 import core.memory;
 import core.stdc.string : memcpy, memmove, memset;
+import std.range;
 import std.traits;
 
 /**
@@ -120,6 +121,18 @@ class Queue(T)
 	final public @property bool empty() const nothrow pure
 	{
 		return (this._count == 0);
+	}
+
+	/**
+	 * The current item capacity of the queue. This will change if the queue 
+	 * reallocates more memory.
+	 *
+	 * Returns:
+	 *     The capacity of how many items the queue can hold.
+	 */
+	final private @property size_t capacity() const nothrow pure
+	{
+		return this._size / T.sizeof;
 	}
 
 	/**
@@ -319,21 +332,75 @@ class Queue(T)
 	}
 
 	/**
-	 * The current item capacity of the queue. This will change if the queue 
-	 * reallocates more memory.
+	 * Return a forward range to allow this queue to be using with various 
+	 * other algorithms.
 	 *
 	 * Returns:
-	 *     The capacity of how many items the queue can hold.
+	 *     A forward range representing this queue.
+	 *
+	 * Example:
+	 * ---
+	 * import std.algorithm;
+	 * import std.string;
+	 *
+	 * auto queue = new Queue!(string);
+	 *
+	 * queue.enqueue("Foo");
+	 * queue.enqueue("Bar");
+	 * queue.enqueue("Baz");
+	 *
+	 * assert(queue.byValue.canFind("Baz"));
+	 * assert(queue.byValue.map!(toLower).array == ["foo", "bar", "baz"]);
+	 * ---
 	 */
-	final private @property size_t capacity() const nothrow pure
+	final public auto byValue() nothrow pure
 	{
-		return this._size / T.sizeof;
+		static struct Result
+		{
+			private T* _data;
+			private T* _front;
+			private size_t _size;
+			private size_t _count;
+
+			public @property ref T front()
+			{
+				return *this._front;
+			}
+
+			public @property bool empty()
+			{
+				return this._count <= 0;
+			}
+
+			public void popFront()
+			{
+				this._front++;
+				this._count--;
+
+				if (this._front == (this._data + (this._size / T.sizeof)))
+				{
+					this._front = this._data;
+				}
+			}
+
+			public @property auto save()
+			{
+				return this;
+			}
+		}
+
+		static assert(isForwardRange!(Result));
+
+		return Result(this._data, this._front, this._size, this._count);
 	}
 }
 
 ///
 unittest
 {
+	import std.algorithm;
+	import std.string;
+
 	auto queue = new Queue!(string);
 
 	queue.enqueue("Foo");
@@ -343,6 +410,7 @@ unittest
 	assert(!queue.empty);
 	assert(queue.count == 3);
 	assert(queue.contains("Bar"));
+	assert(queue.byValue.map!(toLower).array == ["foo", "bar", "baz"]);
 
 	assert(queue.peek() == "Foo");
 	assert(queue.dequeue() == "Foo");
@@ -358,6 +426,8 @@ unittest
 
 unittest
 {
+	import std.algorithm;
+
 	auto queue = new Queue!(int);
 
 	assert(queue.empty);
@@ -377,6 +447,8 @@ unittest
 	assert(queue.count == limit);
 	assert(queue.contains(1));
 	assert(queue.contains(limit));
+	assert(queue.byValue.canFind(1));
+	assert(queue.byValue.canFind(limit));
 	assert(!queue.empty);
 	assert(queue.capacity == 1_280_000);
 
@@ -403,6 +475,8 @@ unittest
 	assert(queue.count == 0);
 	assert(!queue.contains(1));
 	assert(!queue.contains(limit));
+	assert(!queue.byValue.canFind(1));
+	assert(!queue.byValue.canFind(limit));
 	assert(queue.capacity == 10_000);
 }
 
@@ -696,5 +770,64 @@ unittest
 	assert(queue.dequeue()._foo == 1);
 	assert(queue.dequeue()._foo == 2);
 	assert(queue.dequeue()._foo == 3);
+}
+
+unittest
+{
+	import std.algorithm;
+	import std.string;
+
+	auto queue = new Queue!(string);
+
+	queue.enqueue("Foo");
+	queue.enqueue("Bar");
+	queue.enqueue("Baz");
+
+	assert(queue.byValue.canFind("Baz"));
+	assert(queue.byValue.map!(toLower).array == ["foo", "bar", "baz"]);
+	assert(queue.byValue.save.array == ["Foo", "Bar", "Baz"]);
+}
+
+unittest
+{
+	auto queue = new Queue!(string);
+
+	queue.enqueue("Foo");
+	queue.enqueue("Bar");
+	queue.enqueue("Baz");
+	queue.enqueue("Qux");
+
+	size_t counter;
+	auto data  = ["Foo", "Bar", "Baz", "Qux"];
+
+	foreach (value; queue.byValue)
+	{
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (value; queue.byValue.save)
+	{
+		assert(value == data[counter++]);
+	}
+
+	// TODO:
+	// counter = 0;
+	// foreach (value; queue)
+	// {
+	// 	assert(value == data[counter++]);
+	// }
+
+	// counter = 0;
+	// foreach (index, value; queue)
+	// {
+	// 	assert(index == counter);
+	// 	assert(value == data[counter++]);
+	// }
+
+	assert(queue.dequeue() == "Foo");
+	assert(queue.dequeue() == "Bar");
+	assert(queue.dequeue() == "Baz");
+	assert(queue.dequeue() == "Qux");
 }
 
