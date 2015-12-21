@@ -23,6 +23,9 @@
 <td>The type stored in the queue.</td></tr>
 </table>
 <h3>Examples</h3><p><pre>
+<span class="keyword">import</span> std.algorithm;
+<span class="keyword">import</span> std.string;
+
 <span class="keyword">auto</span> queue = <span class="keyword">new</span> <span class="symbol">Queue</span>!(string);
 
 queue.enqueue(<span class="string">"Foo"</span>);
@@ -32,6 +35,7 @@ queue.enqueue(<span class="string">"Baz"</span>);
 <span class="keyword">assert</span>(!queue.empty);
 <span class="keyword">assert</span>(queue.count == 3);
 <span class="keyword">assert</span>(queue.contains(<span class="string">"Bar"</span>));
+<span class="keyword">assert</span>(queue.byValue.map!(toLower).array == [<span class="string">"foo"</span>, <span class="string">"bar"</span>, <span class="string">"baz"</span>]);
 
 <span class="keyword">assert</span>(queue.peek() == <span class="string">"Foo"</span>);
 <span class="keyword">assert</span>(queue.dequeue() == <span class="string">"Foo"</span>);
@@ -144,6 +148,30 @@ queue.clear();
 </p>
 <h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>OutOfMemoryError</td><td>If memory reallocation fails.</td></tr>
      </table></p>
+</div>
+</div>
+<h2><a name="Queue.byValue"></a>final pure nothrow auto <span class="symbol">byValue</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Return a forward range to allow this queue to be using with various
+ other algorithms.
+</p>
+<h3>Return Value</h3><p>A forward range representing this queue.
+
+</p>
+<p><h3>Example:</h3>
+<pre><span class="keyword">import</span> std.algorithm;
+<span class="keyword">import</span> std.string;
+
+<span class="keyword">auto</span> queue = <span class="keyword">new</span> Queue!(string);
+
+queue.enqueue(<span class="string">"Foo"</span>);
+queue.enqueue(<span class="string">"Bar"</span>);
+queue.enqueue(<span class="string">"Baz"</span>);
+
+<span class="keyword">assert</span>(queue.<span class="symbol">byValue</span>.canFind(<span class="string">"Baz"</span>));
+<span class="keyword">assert</span>(queue.<span class="symbol">byValue</span>.map!(toLower).array == [<span class="string">"foo"</span>, <span class="string">"bar"</span>, <span class="string">"baz"</span>]);
+</pre>
+</p>
 </div>
 </div>
 </div>
