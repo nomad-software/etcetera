@@ -11,6 +11,7 @@ module etcetera.collection.queue;
  */
 import core.memory;
 import core.stdc.string : memcpy, memmove, memset;
+import etcetera.meta;
 import std.range;
 import std.traits;
 
@@ -392,6 +393,118 @@ class Queue(T)
 		static assert(isForwardRange!(Result));
 
 		return Result(this._data, this._front, this._size, this._count);
+	}
+
+	/**
+	 * Enable forward iteration in foreach loops.
+	 *
+	 * Params:
+	 *     dg = A delegate that replaces the foreach loop.
+	 *
+	 * Returns:
+	 *     A return value to determine if the loop should continue.
+	 *
+	 * See_Also:
+	 *     $(LINK http://ddili.org/ders/d.en/foreach_opapply.html)
+	 *
+	 * Example:
+	 * ---
+	 * import std.stdio;
+	 *
+	 * auto queue = new Queue!(string);
+	 *
+	 * queue.enqueue("Foo");
+	 * queue.enqueue("Bar");
+	 * queue.enqueue("Baz");
+	 *
+	 * foreach (value; queue)
+	 * {
+	 * 	writefln("%s", value);
+	 * }
+	 * ---
+	 */
+	final public int opApply(ForeachAggregate!(T) dg)
+	{
+		int result   = 0;
+		T* front     = this._front;
+		size_t count = this._count;
+
+		while (count)
+		{
+			result = dg(*front);
+
+			if (result)
+			{
+				break;
+			}
+
+			front++;
+			count--;
+
+			if (front == (this._data + (this._size / T.sizeof)))
+			{
+				front = this._data;
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Enable forward iteration in foreach loops using an index.
+	 *
+	 * Params:
+	 *     dg = A delegate that replaces the foreach loop.
+	 *
+	 * Returns:
+	 *     A return value to determine if the loop should continue.
+	 *
+	 * See_Also:
+	 *     $(LINK http://ddili.org/ders/d.en/foreach_opapply.html)
+	 *
+	 * Example:
+	 * ---
+	 * import std.stdio;
+	 *
+	 * auto queue = new Queue!(string);
+	 *
+	 * queue.enqueue("Foo");
+	 * queue.enqueue("Bar");
+	 * queue.enqueue("Baz");
+	 *
+	 * foreach (index, value; queue)
+	 * {
+	 * 	writefln("%s: %s", index, value);
+	 * }
+	 * ---
+	 */
+	final public int opApply(IndexedForeachAggregate!(T) dg)
+	{
+		int result   = 0;
+		T* front     = this._front;
+		size_t count = this._count;
+		size_t index = 0;
+
+		while (count)
+		{
+			result = dg(index, *front);
+
+			if (result)
+			{
+				break;
+			}
+
+			front++;
+			count--;
+			index++;
+
+			if (front == (this._data + (this._size / T.sizeof)))
+			{
+				front = this._data;
+			}
+		}
+
+		return result;
 	}
 }
 
@@ -811,19 +924,18 @@ unittest
 		assert(value == data[counter++]);
 	}
 
-	// TODO:
-	// counter = 0;
-	// foreach (value; queue)
-	// {
-	// 	assert(value == data[counter++]);
-	// }
+	counter = 0;
+	foreach (value; queue)
+	{
+		assert(value == data[counter++]);
+	}
 
-	// counter = 0;
-	// foreach (index, value; queue)
-	// {
-	// 	assert(index == counter);
-	// 	assert(value == data[counter++]);
-	// }
+	counter = 0;
+	foreach (index, value; queue)
+	{
+		assert(index == counter);
+		assert(value == data[counter++]);
+	}
 
 	assert(queue.dequeue() == "Foo");
 	assert(queue.dequeue() == "Bar");
