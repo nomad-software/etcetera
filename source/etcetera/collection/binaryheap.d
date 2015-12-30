@@ -11,6 +11,7 @@ module etcetera.collection.binaryheap;
  */
 import core.memory;
 import core.stdc.string : memset;
+import etcetera.meta;
 import std.functional;
 import std.range;
 import std.traits;
@@ -508,6 +509,95 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 
 		return Result(this._data, this._end, this._count);
 	}
+
+	/**
+	 * Enable forward iteration in foreach loops.
+	 *
+	 * Params:
+	 *     dg = A delegate that replaces the foreach loop.
+	 *
+	 * Returns:
+	 *     A return value to determine if the loop should continue.
+	 *
+	 * See_Also:
+	 *     $(LINK http://ddili.org/ders/d.en/foreach_opapply.html)
+	 *
+	 * Example:
+	 * ---
+	 * import std.stdio;
+	 *
+	 * auto heap = new BinaryHeap!(int, "a < b");
+	 * heap.insert(2);
+	 * heap.insert(1);
+	 * heap.insert(3);
+	 *
+	 * foreach (value; heap)
+	 * {
+	 * 	writefln("%s", value);
+	 * }
+	 * ---
+	 */
+	final public int opApply(ForeachAggregate!(T) dg)
+	{
+		int result;
+
+		for (T* pointer = this._data; pointer <= this._end; pointer++)
+		{
+			result = dg(*pointer);
+
+			if (result)
+			{
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Enable forward iteration in foreach loops using an index.
+	 *
+	 * Params:
+	 *     dg = A delegate that replaces the foreach loop.
+	 *
+	 * Returns:
+	 *     A return value to determine if the loop should continue.
+	 *
+	 * See_Also:
+	 *     $(LINK http://ddili.org/ders/d.en/foreach_opapply.html)
+	 *
+	 * Example:
+	 * ---
+	 * import std.stdio;
+	 *
+	 * auto heap = new BinaryHeap!(int, "a < b");
+	 * heap.insert(2);
+	 * heap.insert(1);
+	 * heap.insert(3);
+	 *
+	 * foreach (index, value; heap)
+	 * {
+	 * 	writefln("%s: %s", index, value);
+	 * }
+	 * ---
+	 */
+	final public int opApply(IndexedForeachAggregate!(T) dg)
+	{
+		int result;
+		size_t index;
+
+		for (T* pointer = this._data; pointer <= this._end; index++, pointer++)
+		{
+			result = dg(index, *pointer);
+
+			if (result)
+			{
+				break;
+			}
+		}
+
+		return result;
+	}
 }
 
 ///
@@ -701,5 +791,46 @@ unittest
 	{
 		assert(heap.extract() == x);
 	}
+}
+
+unittest
+{
+	auto heap = new BinaryHeap!(int, "a < b");
+	heap.insert(4);
+	heap.insert(1);
+	heap.insert(3);
+	heap.insert(2);
+
+	size_t counter;
+	auto data  = [1, 2, 3, 4];
+
+	foreach (value; heap.byValue)
+	{
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (value; heap.byValue.save)
+	{
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (value; heap)
+	{
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (index, value; heap)
+	{
+		assert(index == counter);
+		assert(value == data[counter++]);
+	}
+
+	assert(heap.extract() == 1);
+	assert(heap.extract() == 2);
+	assert(heap.extract() == 3);
+	assert(heap.extract() == 4);
 }
 

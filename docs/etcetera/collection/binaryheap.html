@@ -174,6 +174,64 @@ When using this method to return a range there is an upfront
      returned.</p>
 </div>
 </div>
+<h2><a name="BinaryHeap.opApply"></a>final int <span class="symbol">opApply</span>(ForeachAggregate!T dg);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Enable forward iteration in foreach loops.
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>ForeachAggregate!T dg</td>
+<td>A delegate that replaces the foreach loop.</td></tr>
+</table>
+<h3>Return Value</h3><p>A return value to determine if the loop should continue.
+
+</p>
+<h3>See Also</h3><p><a href="http://ddili.org/ders/d.en/foreach_opapply.html">http://ddili.org/ders/d.en/foreach_opapply.html</a>
+
+</p>
+<p><h3>Example:</h3>
+<pre><span class="keyword">import</span> std.stdio;
+
+<span class="keyword">auto</span> heap = <span class="keyword">new</span> BinaryHeap!(<span class="keyword">int</span>, <span class="string">"a &lt; b"</span>);
+heap.insert(2);
+heap.insert(1);
+heap.insert(3);
+
+<span class="keyword">foreach</span> (value; heap)
+{
+	writefln(<span class="string">"%s"</span>, value);
+}
+</pre>
+</p>
+</div>
+</div>
+<h2><a name="BinaryHeap.opApply.2"></a>final int <span class="symbol">opApply</span>(IndexedForeachAggregate!T dg);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Enable forward iteration in foreach loops using an index.
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>IndexedForeachAggregate!T dg</td>
+<td>A delegate that replaces the foreach loop.</td></tr>
+</table>
+<h3>Return Value</h3><p>A return value to determine if the loop should continue.
+
+</p>
+<h3>See Also</h3><p><a href="http://ddili.org/ders/d.en/foreach_opapply.html">http://ddili.org/ders/d.en/foreach_opapply.html</a>
+
+</p>
+<p><h3>Example:</h3>
+<pre><span class="keyword">import</span> std.stdio;
+
+<span class="keyword">auto</span> heap = <span class="keyword">new</span> BinaryHeap!(<span class="keyword">int</span>, <span class="string">"a &lt; b"</span>);
+heap.insert(2);
+heap.insert(1);
+heap.insert(3);
+
+<span class="keyword">foreach</span> (index, value; heap)
+{
+	writefln(<span class="string">"%s: %s"</span>, index, value);
+}
+</pre>
+</p>
+</div>
+</div>
 </div>
 </div>
 </div>
