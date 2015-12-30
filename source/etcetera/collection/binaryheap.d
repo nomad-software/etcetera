@@ -349,6 +349,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 		{
 			return;
 		}
+
 		// The parent has one child.
 		else if (this._count == child2Index)
 		{
@@ -397,25 +398,45 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	/**
 	 * Sort the internal data to allow it to be iterated more easily.
 	 *
-	 * Even though we are tinkering with the internal state, once sorted it's 
-	 * still a fully correct heap.
+	 * Even though we are tinkering with the internal state here, once sorted 
+	 * it's still a fully correct heap. The sort alorithm used is heapsort.
 	 */
-	final private auto sort() nothrow pure
+	final private auto sort() nothrow
 	{
 		if (!this._stateIsSorted)
 		{
-			for (T* back = this._end; back > this._data; back--)
+			size_t count = this._count;
+			T* end       = this._end;
+			T temp;
+
+			while (this._count)
 			{
-				for (T* front = this._data; front < back; front++)
-				{
-					if (this.greaterFirst(*back, *front))
-					{
-						T temp = *front;
-						*front = *back;
-						*back  = temp;
-					}
-				}
+				temp        = *this._data;
+				*this._data = *this._end;
+				*this._end  = temp;
+
+				this._count--;
+				this._end--;
+
+				this.siftDown(0);
 			}
+
+			this._count = count;
+			this._end   = end;
+
+			T* front = this._data;
+			T* back  = this._end;
+
+			while (front < back)
+			{
+				temp   = *front;
+				*front = *back;
+				*back  = temp;
+
+				front++;
+				back--;
+			}
+
 			this._stateIsSorted = true;
 		}
 	}
@@ -446,7 +467,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	 *     performance cost of sorting the internal state before the range is 
 	 *     returned.
 	 */
-	final public auto byValue() nothrow pure
+	final public auto byValue() nothrow
 	{
 		static struct Result
 		{
@@ -514,6 +535,8 @@ unittest
 
 unittest
 {
+	import std.algorithm;
+
 	auto heap = new BinaryHeap!(int, (int a, int b) => a > b);
 
 	assert(heap.empty);
@@ -533,6 +556,9 @@ unittest
 	assert(heap.count == limit);
 	assert(heap.contains(1));
 	assert(heap.contains(limit));
+	assert(heap.byValue.canFind(1));
+	assert(heap.byValue.canFind(limit));
+	assert(heap.byValue.length == limit);
 	assert(!heap.empty);
 	assert(heap.capacity == 1_280_000);
 
@@ -559,6 +585,9 @@ unittest
 	assert(heap.count == 0);
 	assert(!heap.contains(1));
 	assert(!heap.contains(limit));
+	assert(!heap.byValue.canFind(1));
+	assert(!heap.byValue.canFind(limit));
+	assert(heap.byValue.length == 0);
 	assert(heap.capacity == 10_000);
 }
 
