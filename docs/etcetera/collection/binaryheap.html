@@ -146,6 +146,34 @@ heap.clear();
      </table></p>
 </div>
 </div>
+<h2><a name="BinaryHeap.byValue"></a>final pure nothrow auto <span class="symbol">byValue</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Return a forward range to allow this heap to be used with various
+ other algorithms.
+</p>
+<h3>Return Value</h3><p>A forward range representing this heap.
+
+</p>
+<p><h3>Example:</h3>
+<pre><span class="keyword">import</span> std.algorithm;
+
+<span class="keyword">auto</span> heap = <span class="keyword">new</span> BinaryHeap!(<span class="keyword">int</span>, <span class="string">"a &gt; b"</span>);
+
+heap.insert(2);
+heap.insert(1);
+heap.insert(3);
+
+<span class="keyword">assert</span>(heap.<span class="symbol">byValue</span>.canFind(2));
+<span class="keyword">assert</span>(heap.<span class="symbol">byValue</span>.map!(x =&gt; x + 1).array == [4, 3, 2]);
+</pre>
+
+</p>
+<p><h3>Warning:</h3>
+When using this method to return a range there is an upfront
+     performance cost of sorting the internal state before the range is
+     returned.</p>
+</div>
+</div>
 </div>
 </div>
 </div>

@@ -501,7 +501,7 @@ class LinkedList(T)
 	}
 
 	/**
-	 * Return a bidirectional range to allow this list to be using with various 
+	 * Return a bidirectional range to allow this list to be used with various 
 	 * other algorithms.
 	 *
 	 * Returns:
@@ -530,6 +530,7 @@ class LinkedList(T)
 		{
 			private Node!(T)* _first;
 			private Node!(T)* _last;
+			private size_t _count;
 
 			public @property ref T front()
 			{
@@ -560,11 +561,17 @@ class LinkedList(T)
 			{
 				return this;
 			}
+
+			public @property size_t length()
+			{
+				return this._count;
+			}
 		}
 
 		static assert(isBidirectionalRange!(Result));
+		static assert(hasLength!(Result));
 
-		return Result(this._first, this._last);
+		return Result(this._first, this._last, this._count);
 	}
 
 	/**
@@ -803,6 +810,7 @@ unittest
 	assert(list.contains(limit));
 	assert(list.byValue.canFind(1));
 	assert(list.byValue.canFind(limit));
+	assert(list.byValue.length == limit);
 	assert(!list.empty);
 
 	for (int x = limit; x >= 1 ; x--)
@@ -853,6 +861,7 @@ unittest
 	assert(!list.contains(limit));
 	assert(!list.byValue.canFind(1));
 	assert(!list.byValue.canFind(limit));
+	assert(list.byValue.length == 0);
 }
 
 unittest

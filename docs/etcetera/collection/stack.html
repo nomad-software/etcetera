@@ -36,7 +36,6 @@ stack.push(<span class="string">"Baz"</span>);
 <span class="keyword">assert</span>(stack.count == 3);
 <span class="keyword">assert</span>(stack.contains(<span class="string">"Bar"</span>));
 <span class="keyword">assert</span>(stack.byValue.map!(toLower).array == [<span class="string">"baz"</span>, <span class="string">"bar"</span>, <span class="string">"foo"</span>]);
-
 <span class="keyword">assert</span>(stack.peek() == <span class="string">"Baz"</span>);
 <span class="keyword">assert</span>(stack.pop() == <span class="string">"Baz"</span>);
 <span class="keyword">assert</span>(stack.pop() == <span class="string">"Bar"</span>);
@@ -152,7 +151,7 @@ stack.clear();
 </div>
 <h2><a name="Stack.byValue"></a>final pure nothrow auto <span class="symbol">byValue</span>();
 </h2>
-<div class="declaration-description"><div class="sections"><p>Return a forward range to allow this stack to be using with various
+<div class="declaration-description"><div class="sections"><p>Return a forward range to allow this stack to be used with various
  other algorithms.
 </p>
 <h3>Return Value</h3><p>A forward range representing this stack.

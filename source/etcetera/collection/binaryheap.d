@@ -12,6 +12,7 @@ module etcetera.collection.binaryheap;
 import core.memory;
 import core.stdc.string : memset;
 import std.functional;
+import std.range;
 import std.traits;
 
 /**
@@ -53,7 +54,12 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	/**
 	 * The number of items currently held in the heap.
 	 */
-	private size_t _count = 0;
+	private size_t _count;
+
+	/**
+	 * A flag representing if the internal state is sorted or not.
+	 */
+	private bool _stateIsSorted;
 
 	/**
 	 * Construct a new binary heap.
@@ -158,6 +164,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 
 		*this._end = item;
 		this.siftUp(this._end - this._data);
+		this._stateIsSorted = false;
 	}
 
 	/**
@@ -215,6 +222,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 		}
 
 		this.siftDown(0);
+		this._stateIsSorted = false;
 
 		return extracted;
 	}
@@ -264,8 +272,9 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 
 		memset(this._data, 0, this._size);
 
-		this._end   = this._data - 1;
-		this._count = 0;
+		this._end           = this._data - 1;
+		this._count         = 0;
+		this._stateIsSorted = false;
 	}
 
 	/**
@@ -383,6 +392,100 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 				}
 			}
 		}
+	}
+
+	/**
+	 * Sort the internal data to allow it to be iterated more easily.
+	 *
+	 * Even though we are tinkering with the internal state, once sorted it's 
+	 * still a fully correct heap.
+	 */
+	final private auto sort() nothrow pure
+	{
+		if (!this._stateIsSorted)
+		{
+			for (T* back = this._end; back > this._data; back--)
+			{
+				for (T* front = this._data; front < back; front++)
+				{
+					if (this.greaterFirst(*back, *front))
+					{
+						T temp = *front;
+						*front = *back;
+						*back  = temp;
+					}
+				}
+			}
+			this._stateIsSorted = true;
+		}
+	}
+
+	/**
+	 * Return a forward range to allow this heap to be used with various 
+	 * other algorithms.
+	 *
+	 * Returns:
+	 *     A forward range representing this heap.
+	 *
+	 * Example:
+	 * ---
+	 * import std.algorithm;
+	 *
+	 * auto heap = new BinaryHeap!(int, "a > b");
+	 *
+	 * heap.insert(2);
+	 * heap.insert(1);
+	 * heap.insert(3);
+
+	 * assert(heap.byValue.canFind(2));
+	 * assert(heap.byValue.map!(x => x + 1).array == [4, 3, 2]);
+	 * ---
+	 *
+	 * Warning:
+	 *     When using this method to return a range there is an upfront 
+	 *     performance cost of sorting the internal state before the range is 
+	 *     returned.
+	 */
+	final public auto byValue() nothrow pure
+	{
+		static struct Result
+		{
+			private T* _data;
+			private T* _end;
+			private size_t _count;
+
+			public @property ref T front()
+			{
+				return *this._data;
+			}
+
+			public @property bool empty()
+			{
+				return this._data > this._end;
+			}
+
+			public void popFront()
+			{
+				this._data++;
+			}
+
+			public @property auto save()
+			{
+				return this;
+			}
+
+			public @property size_t length()
+			{
+				return this._count;
+			}
+		}
+
+		static assert(isForwardRange!(Result));
+		static assert(hasLength!(Result));
+
+		this.sort();
+
+		return Result(this._data, this._end, this._count);
 	}
 }
 
@@ -547,5 +650,27 @@ unittest
 	assert(priorityQueue.extract().name == "Quxx");
 	assert(priorityQueue.extract().name == "Baz");
 	assert(priorityQueue.extract().name == "Foo");
+}
+
+unittest
+{
+	import std.algorithm;
+
+	int limit = 1_000;
+
+	auto heap = new BinaryHeap!(int, "a > b");
+
+	for (int x = 1; x <= limit ; x++)
+	{
+		heap.insert(x);
+	}
+
+	assert(heap.byValue.canFind(500));
+	assert(heap.byValue.take(5).array == [1000, 999, 998, 997, 996]);
+
+	for (int x = limit; x >= 1 ; x--)
+	{
+		assert(heap.extract() == x);
+	}
 }
 

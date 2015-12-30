@@ -61,7 +61,7 @@ class Queue(T)
 	/**
 	 * The number of items currently held in the queue.
 	 */
-	private size_t _count = 0;
+	private size_t _count;
 
 	/**
 	 * Construct a new queue.
@@ -333,7 +333,7 @@ class Queue(T)
 	}
 
 	/**
-	 * Return a forward range to allow this queue to be using with various 
+	 * Return a forward range to allow this queue to be used with various 
 	 * other algorithms.
 	 *
 	 * Returns:
@@ -388,9 +388,15 @@ class Queue(T)
 			{
 				return this;
 			}
+
+			public @property size_t length()
+			{
+				return this._count;
+			}
 		}
 
 		static assert(isForwardRange!(Result));
+		static assert(hasLength!(Result));
 
 		return Result(this._data, this._front, this._size, this._count);
 	}
@@ -562,6 +568,7 @@ unittest
 	assert(queue.contains(limit));
 	assert(queue.byValue.canFind(1));
 	assert(queue.byValue.canFind(limit));
+	assert(queue.byValue.length == limit);
 	assert(!queue.empty);
 	assert(queue.capacity == 1_280_000);
 
@@ -590,6 +597,7 @@ unittest
 	assert(!queue.contains(limit));
 	assert(!queue.byValue.canFind(1));
 	assert(!queue.byValue.canFind(limit));
+	assert(queue.byValue.length == 0);
 	assert(queue.capacity == 10_000);
 }
 

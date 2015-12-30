@@ -46,7 +46,7 @@ class Stack(T)
 	/**
 	 * The number of items currently held in the stack.
 	 */
-	private size_t _count = 0;
+	private size_t _count;
 
 	/**
 	 * Construct a new stack.
@@ -259,7 +259,7 @@ class Stack(T)
 	}
 
 	/**
-	 * Return a forward range to allow this stack to be using with various 
+	 * Return a forward range to allow this stack to be used with various 
 	 * other algorithms.
 	 *
 	 * Returns:
@@ -286,6 +286,7 @@ class Stack(T)
 		{
 			private T* _data;
 			private T* _pointer;
+			private size_t _count;
 
 			public @property ref T front()
 			{
@@ -306,11 +307,17 @@ class Stack(T)
 			{
 				return this;
 			}
+
+			public @property size_t length()
+			{
+				return this._count;
+			}
 		}
 
 		static assert(isForwardRange!(Result));
+		static assert(hasLength!(Result));
 
-		return Result(this._data, this._pointer);
+		return Result(this._data, this._pointer, this._count);
 	}
 
 	/**
@@ -421,7 +428,6 @@ unittest
 	assert(stack.count == 3);
 	assert(stack.contains("Bar"));
 	assert(stack.byValue.map!(toLower).array == ["baz", "bar", "foo"]);
-
 	assert(stack.peek() == "Baz");
 	assert(stack.pop() == "Baz");
 	assert(stack.pop() == "Bar");
@@ -458,6 +464,7 @@ unittest
 	assert(stack.contains(limit));
 	assert(stack.byValue.canFind(1));
 	assert(stack.byValue.canFind(limit));
+	assert(stack.byValue.length == limit);
 	assert(!stack.empty);
 	assert(stack.capacity == 1_280_000);
 
@@ -486,6 +493,7 @@ unittest
 	assert(!stack.contains(limit));
 	assert(!stack.byValue.canFind(1));
 	assert(!stack.byValue.canFind(limit));
+	assert(stack.byValue.length == 0);
 	assert(stack.capacity == 10_000);
 }
 
