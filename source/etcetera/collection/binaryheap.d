@@ -540,6 +540,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	final public int opApply(ForeachAggregate!(T) dg)
 	{
 		int result;
+		this.sort();
 
 		for (T* pointer = this._data; pointer <= this._end; pointer++)
 		{
@@ -585,6 +586,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	{
 		int result;
 		size_t index;
+		this.sort();
 
 		for (T* pointer = this._data; pointer <= this._end; index++, pointer++)
 		{
@@ -804,17 +806,6 @@ unittest
 	size_t counter;
 	auto data  = [1, 2, 3, 4];
 
-	foreach (value; heap.byValue)
-	{
-		assert(value == data[counter++]);
-	}
-
-	counter = 0;
-	foreach (value; heap.byValue.save)
-	{
-		assert(value == data[counter++]);
-	}
-
 	counter = 0;
 	foreach (value; heap)
 	{
@@ -825,6 +816,18 @@ unittest
 	foreach (index, value; heap)
 	{
 		assert(index == counter);
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (value; heap.byValue)
+	{
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (value; heap.byValue.save)
+	{
 		assert(value == data[counter++]);
 	}
 
