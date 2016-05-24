@@ -12,6 +12,7 @@ module etcetera.collection.binaryheap;
 import core.memory;
 import core.stdc.string : memset;
 import etcetera.meta;
+import std.algorithm;
 import std.functional;
 import std.range;
 import std.traits;
@@ -397,53 +398,16 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	}
 
 	/**
-	 * Sort the internal data to allow it to be iterated more easily.
+	 * Sort the internal data to allow it to be iterated.
 	 *
-	 * Even though we are tinkering with the internal state here, once sorted 
-	 * it's still a fully correct heap. The sort alorithm used is heapsort.
+	 * Even though we are tinkering with the internal state here, once sorted
+	 * it's still a fully correct heap.
 	 */
 	final private auto sort() nothrow
 	{
-		static size_t count;
-		static T* end;
-		static T temp;
-		static T* front;
-		static T* back;
-
 		if (!this._stateIsSorted)
 		{
-			count = this._count;
-			end   = this._end;
-
-			while (this._count)
-			{
-				temp        = *this._data;
-				*this._data = *this._end;
-				*this._end  = temp;
-
-				this._count--;
-				this._end--;
-
-				this.siftDown(0);
-			}
-
-			this._count = count;
-			this._end   = end;
-
-			front = this._data;
-			back  = this._end;
-
-			while (front < back)
-			{
-				temp   = *front;
-				*front = *back;
-				*back  = temp;
-
-				front++;
-				back--;
-			}
-
-			this._stateIsSorted = true;
+			this._data[0 .. this._count].sort!(greaterFirst);
 		}
 	}
 
