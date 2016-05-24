@@ -203,7 +203,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	{
 		assert(this._count, "Heap empty, extracting failed.");
 
-		T extracted;
+		static T extracted;
 
 		this._count--;
 		extracted = *this._data;
@@ -404,11 +404,16 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	 */
 	final private auto sort() nothrow
 	{
+		static size_t count;
+		static T* end;
+		static T temp;
+		static T* front;
+		static T* back;
+
 		if (!this._stateIsSorted)
 		{
-			size_t count = this._count;
-			T* end       = this._end;
-			T temp;
+			count = this._count;
+			end   = this._end;
 
 			while (this._count)
 			{
@@ -425,8 +430,8 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 			this._count = count;
 			this._end   = end;
 
-			T* front = this._data;
-			T* back  = this._end;
+			front = this._data;
+			back  = this._end;
 
 			while (front < back)
 			{
