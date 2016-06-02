@@ -258,11 +258,11 @@ class LinkedList(T)
 	}
 
 	/**
-	 * Insert a new item at the specified index. The index must be between (and 
+	 * Insert a new item at the specified index. The index must be between (and
 	 * including) 0 and the number returned by the count method.
 	 *
-	 * This method uses a linear search to find the index in the list. The only 
-	 * optimisation done is that if the index is past half way, the search 
+	 * This method uses a linear search to find the index in the list. The only
+	 * optimisation done is that if the index is past half way, the search
 	 * starts from the last item and works backwards.
 	 *
 	 * Params:
@@ -277,7 +277,7 @@ class LinkedList(T)
 	 */
 	final public void insert(T item, size_t index) nothrow
 	{
-		assert(index >= 0 || index <= this._count, "Index outside of list bounds.");
+		assert(index >= 0 && index <= this._count, "Index outside of list bounds.");
 
 		if (index == 0)
 		{
@@ -338,11 +338,11 @@ class LinkedList(T)
 	}
 
 	/**
-	 * Get the item at the specified index. The index must be between (and 
+	 * Get the item at the specified index. The index must be between (and
 	 * including) 0 and be below the number returned by the count method.
 	 *
-	 * This method uses a linear search to find the index in the list. The only 
-	 * optimisation done is that if the index is past half way, the search 
+	 * This method uses a linear search to find the index in the list. The only
+	 * optimisation done is that if the index is past half way, the search
 	 * starts from the last item and works backwards.
 	 *
 	 * Params:
@@ -356,7 +356,7 @@ class LinkedList(T)
 	final public T get(size_t index) nothrow pure
 	{
 		assert(this._count, "List empty, getting value failed.");
-		assert(index >= 0 || index < this._count, "Index outside of list bounds.");
+		assert(index >= 0 && index < this._count, "Index outside of list bounds.");
 
 		if (index == 0)
 		{
@@ -395,11 +395,68 @@ class LinkedList(T)
 	}
 
 	/**
-	 * Remove the item at the specified index. The index must be between (and 
+	 * Update the item at the specified index. The index must be between (and
 	 * including) 0 and be below the number returned by the count method.
 	 *
-	 * This method uses a linear search to find the index in the list. The only 
-	 * optimisation done is that if the index is past half way, the search 
+	 * This method uses a linear search to find the index in the list. The only
+	 * optimisation done is that if the index is past half way, the search
+	 * starts from the last item and works backwards.
+	 *
+	 * Params:
+	 *     index = The index of the item to update.
+	 *     item = The new item to insert.
+	 *
+	 * Throws:
+	 *     $(PARAM_TABLE
+	 *         $(PARAM_ROW AssertError, If index is outside of limits.)
+	 *     )
+	 */
+	final public void update(size_t index, T item) nothrow pure
+	{
+		assert(this._count, "List empty, updating value failed.");
+		assert(index >= 0 && index < this._count, "Index outside of list bounds.");
+
+		if (index == 0)
+		{
+			(*this._first).data = item;
+		}
+		else if (index == this._count - 1)
+		{
+			(*this._last).data = item;
+		}
+		else
+		{
+			if (index >= this._count / 2)
+			{
+				size_t listIndex = this._count - 1;
+				for (auto listNode = this._last; listNode !is null; listIndex--, listNode = (*listNode).prev)
+				{
+					if (listIndex == index)
+					{
+						(*listNode).data = item;
+					}
+				}
+			}
+			else
+			{
+				size_t listIndex;
+				for (auto listNode = this._first; listNode !is null; listIndex++, listNode = (*listNode).next)
+				{
+					if (listIndex == index)
+					{
+						(*listNode).data = item;
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Remove the item at the specified index. The index must be between (and
+	 * including) 0 and be below the number returned by the count method.
+	 *
+	 * This method uses a linear search to find the index in the list. The only
+	 * optimisation done is that if the index is past half way, the search
 	 * starts from the last item and works backwards.
 	 *
 	 * Params:
@@ -413,7 +470,7 @@ class LinkedList(T)
 	final public void remove(size_t index) nothrow
 	{
 		assert(this._count, "List empty, getting value failed.");
-		assert(index >= 0 || index < this._count, "Index outside of list bounds.");
+		assert(index >= 0 && index < this._count, "Index outside of list bounds.");
 
 		if (index == 0)
 		{
@@ -463,7 +520,7 @@ class LinkedList(T)
 	/**
 	 * Check if a value is contained in the list.
 	 *
-	 * This is a simple linear search and can take quite some time with large 
+	 * This is a simple linear search and can take quite some time with large
 	 * lists.
 	 *
 	 * Params:
@@ -501,7 +558,7 @@ class LinkedList(T)
 	}
 
 	/**
-	 * Return a bidirectional range to allow this list to be used with various 
+	 * Return a bidirectional range to allow this list to be used with various
 	 * other algorithms.
 	 *
 	 * Returns:
@@ -603,7 +660,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(ForeachAggregate!(T) dg)
+	final public int opApply(ForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 
@@ -649,7 +706,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(IndexedForeachAggregate!(T) dg)
+	final public int opApply(IndexedForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 		size_t index;
@@ -696,7 +753,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApplyReverse(ForeachAggregate!(T) dg)
+	final public int opApplyReverse(ForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 
@@ -742,7 +799,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApplyReverse(IndexedForeachAggregate!(T) dg)
+	final public int opApplyReverse(IndexedForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 		size_t index = this._count - 1;
@@ -1058,6 +1115,23 @@ unittest
 
 	list.insert(2, 1);
 	assert(list.byValue.array == [1, 2, 3, 4]);
+}
+
+unittest
+{
+	auto list = new LinkedList!(int);
+
+	list.insertLast(1);
+	list.insertLast(2);
+	list.insertLast(3);
+	list.insertLast(4);
+
+	list.update(3, 8);
+	list.update(0, 5);
+	list.update(2, 7);
+	list.update(1, 6);
+
+	assert(list.byValue.array == [5, 6, 7, 8]);
 }
 
 unittest

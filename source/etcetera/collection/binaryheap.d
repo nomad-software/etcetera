@@ -22,9 +22,9 @@ import std.traits;
  *
  * Params:
  *     T = The type stored in the heap.
- *     pred = A predicate that returns true if the first parameter is 
- *     greater than the second. This predicate defines the sorting order 
- *     between the heap items and is called during insertion and extraction.
+ *     pred = A predicate that returns true if the first parameter is greater
+ *     than the second. This predicate defines the sorting order between the
+ *     heap items and is called during insertion and extraction.
  */
 class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) == bool))
 {
@@ -66,10 +66,10 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	/**
 	 * Construct a new binary heap.
 	 *
-	 * By default the heap is allocated enough memory for 10,000 items. If 
-	 * more items are added, the heap can grow by doubling its allocation, ad 
-	 * infinitum. If the items within reduce to only use half of the current 
-	 * allocation the heap will half it. The heap will never shrink below the 
+	 * By default the heap is allocated enough memory for 8,192 items. If more
+	 * items are added, the heap can grow by doubling its allocation, ad
+	 * infinitum. If the items within reduce to only use half of the current
+	 * allocation the heap will half it. The heap will never shrink below the
 	 * minimum capacity amount.
 	 *
 	 * Params:
@@ -82,7 +82,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	 *         $(PARAM_ROW OutOfMemoryError, If memory allocation fails.)
 	 *     )
 	 */
-	final public this(size_t minCapacity = 10_000) nothrow
+	final public this(size_t minCapacity = 8_192) nothrow
 	{
 		assert(minCapacity >= 1, "Heap must allow for at least one item.");
 
@@ -124,7 +124,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	}
 
 	/**
-	 * The current item capacity of the heap. This will change if the heap 
+	 * The current item capacity of the heap. This will change if the heap
 	 * reallocates more memory.
 	 *
 	 * Returns:
@@ -138,7 +138,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	/**
 	 * Insert an item into the heap.
 	 *
-	 * This method reallocates and doubles the memory used by the heap if no 
+	 * This method reallocates and doubles the memory used by the heap if no
 	 * more items can be stored in available memory.
 	 *
 	 * Params:
@@ -188,7 +188,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	}
 
 	/**
-	 * Extract the value from the top of the heap and re-order the remaining 
+	 * Extract the value from the top of the heap and re-order the remaining
 	 * items.
 	 *
 	 * Returns:
@@ -232,7 +232,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	/**
 	 * Check if a value is contained in the heap.
 	 *
-	 * This is a simple linear search and can take quite some time with large 
+	 * This is a simple linear search and can take quite some time with large
 	 * heaps.
 	 *
 	 * Params:
@@ -256,7 +256,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	/**
 	 * Clears the heap.
 	 *
-	 * This method reallocates the memory used by the heap to the minimum size 
+	 * This method reallocates the memory used by the heap to the minimum size
 	 * if more is currently allocated.
 	 *
 	 * Throws:
@@ -280,11 +280,11 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	}
 
 	/**
-	 * Sift child items up through the heap if they are greater than their 
+	 * Sift child items up through the heap if they are greater than their
 	 * parents.
 	 *
 	 * Params:
-	 *     childIndex = The index of the item to sift up. The index must 
+	 *     childIndex = The index of the item to sift up. The index must
 	 *     contain a child item.
 	 */
 	final private void siftUp(size_t childIndex) nothrow
@@ -328,11 +328,11 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	}
 
 	/**
-	 * Sift parent items down through the heap if they are lesser than their 
+	 * Sift parent items down through the heap if they are lesser than their
 	 * children.
 	 *
 	 * Params:
-	 *     parentIndex = The index of the item to sift down. The index must 
+	 *     parentIndex = The index of the item to sift down. The index must
 	 *     contain a parent item.
 	 */
 	final private void siftDown(size_t parentIndex) nothrow
@@ -412,7 +412,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	}
 
 	/**
-	 * Return a forward range to allow this heap to be used with various 
+	 * Return a forward range to allow this heap to be used with various
 	 * other algorithms.
 	 *
 	 * Returns:
@@ -433,8 +433,8 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	 * ---
 	 *
 	 * Warning:
-	 *     When using this method to return a range there is an upfront 
-	 *     performance cost of sorting the internal state before the range is 
+	 *     When using this method to return a range there is an upfront
+	 *     performance cost of sorting the internal state before the range is
 	 *     returned.
 	 */
 	final public auto byValue() nothrow
@@ -506,7 +506,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	 * }
 	 * ---
 	 */
-	final public int opApply(ForeachAggregate!(T) dg)
+	final public int opApply(ForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 		this.sort();
@@ -551,7 +551,7 @@ class BinaryHeap(T, alias pred) if (is(typeof(binaryFun!(pred)(T.init, T.init)) 
 	 * }
 	 * ---
 	 */
-	final public int opApply(IndexedForeachAggregate!(T) dg)
+	final public int opApply(IndexedForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 		size_t index;
@@ -602,7 +602,7 @@ unittest
 
 	assert(heap.empty);
 	assert(heap.count == 0);
-	assert(heap.capacity == 10_000);
+	assert(heap.capacity == 8_192);
 
 	int limit = 1_000_000;
 
@@ -621,7 +621,7 @@ unittest
 	assert(heap.byValue.canFind(limit));
 	assert(heap.byValue.length == limit);
 	assert(!heap.empty);
-	assert(heap.capacity == 1_280_000);
+	assert(heap.capacity == 1_048_576);
 
 	for (int x = limit; x >= 1 ; x--)
 	{
@@ -631,7 +631,7 @@ unittest
 	}
 
 	assert(heap.empty);
-	assert(heap.capacity == 10_000);
+	assert(heap.capacity == 8_192);
 
 	for (int x = 1; x <= limit ; x++)
 	{
@@ -649,7 +649,7 @@ unittest
 	assert(!heap.byValue.canFind(1));
 	assert(!heap.byValue.canFind(limit));
 	assert(heap.byValue.length == 0);
-	assert(heap.capacity == 10_000);
+	assert(heap.capacity == 8_192);
 }
 
 unittest

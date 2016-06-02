@@ -51,10 +51,10 @@ class Stack(T)
 	/**
 	 * Construct a new stack.
 	 *
-	 * By default the stack is allocated enough memory for 10,000 items. If 
-	 * more items are added, the stack can grow by doubling its allocation, ad 
-	 * infinitum. If the items within reduce to only use half of the current 
-	 * allocation the stack will half it. The stack will never shrink below the 
+	 * By default the stack is allocated enough memory for 8,192 items. If more
+	 * items are added, the stack can grow by doubling its allocation, ad
+	 * infinitum. If the items within reduce to only use half of the current
+	 * allocation the stack will half it. The stack will never shrink below the
 	 * minimum capacity amount.
 	 *
 	 * Params:
@@ -67,7 +67,7 @@ class Stack(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory allocation fails.)
 	 *     )
 	 */
-	final public this(size_t minCapacity = 10_000) nothrow
+	final public this(size_t minCapacity = 8_192) nothrow
 	{
 		assert(minCapacity >= 1, "Stack must allow for at least one item.");
 
@@ -109,7 +109,7 @@ class Stack(T)
 	}
 
 	/**
-	 * The current item capacity of the stack. This will change if the stack 
+	 * The current item capacity of the stack. This will change if the stack
 	 * reallocates more memory.
 	 *
 	 * Returns:
@@ -123,7 +123,7 @@ class Stack(T)
 	/**
 	 * Push an item onto the stack.
 	 *
-	 * This method reallocates and doubles the memory used by the stack if no 
+	 * This method reallocates and doubles the memory used by the stack if no
 	 * more items can be stored in available memory.
 	 *
 	 * Params:
@@ -173,7 +173,7 @@ class Stack(T)
 	/**
 	 * Remove and return the last item pushed onto the stack.
 	 *
-	 * This method reallocates the memory used by the stack, halfing it if 
+	 * This method reallocates the memory used by the stack, halfing it if
 	 * half will adequately hold all the items.
 	 *
 	 * Returns:
@@ -212,7 +212,7 @@ class Stack(T)
 	/**
 	 * Check if a value is contained in the stack.
 	 *
-	 * This is a simple linear search and can take quite some time with large 
+	 * This is a simple linear search and can take quite some time with large
 	 * stacks.
 	 *
 	 * Params:
@@ -236,7 +236,7 @@ class Stack(T)
 	/**
 	 * Clears the stack.
 	 *
-	 * This method reallocates the memory used by the stack to the minimum size 
+	 * This method reallocates the memory used by the stack to the minimum size
 	 * if more is currently allocated.
 	 *
 	 * Throws:
@@ -259,7 +259,7 @@ class Stack(T)
 	}
 
 	/**
-	 * Return a forward range to allow this stack to be used with various 
+	 * Return a forward range to allow this stack to be used with various
 	 * other algorithms.
 	 *
 	 * Returns:
@@ -269,13 +269,13 @@ class Stack(T)
 	 * ---
 	 * import std.algorithm;
 	 * import std.string;
-
+	 *
 	 * auto stack = new Stack!(string);
-
+	 *
 	 * stack.push("Foo");
 	 * stack.push("Bar");
 	 * stack.push("Baz");
-
+	 *
 	 * assert(stack.byValue.canFind("Baz"));
 	 * assert(stack.byValue.map!(toLower).array == ["baz", "bar", "foo"]);
 	 * ---
@@ -348,7 +348,7 @@ class Stack(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(ForeachAggregate!(T) dg)
+	final public int opApply(ForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 
@@ -393,7 +393,7 @@ class Stack(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(IndexedForeachAggregate!(T) dg)
+	final public int opApply(IndexedForeachAggregate!(T) dg) nothrow
 	{
 		int result;
 		size_t index;
@@ -447,7 +447,7 @@ unittest
 
 	assert(stack.empty);
 	assert(stack.count == 0);
-	assert(stack.capacity == 10_000);
+	assert(stack.capacity == 8_192);
 
 	int limit = 1_000_000;
 
@@ -466,7 +466,7 @@ unittest
 	assert(stack.byValue.canFind(limit));
 	assert(stack.byValue.length == limit);
 	assert(!stack.empty);
-	assert(stack.capacity == 1_280_000);
+	assert(stack.capacity == 1_048_576);
 
 	for (int x = limit; x >= 1 ; x--)
 	{
@@ -476,7 +476,7 @@ unittest
 	}
 
 	assert(stack.empty);
-	assert(stack.capacity == 10_000);
+	assert(stack.capacity == 8_192);
 
 	for (int x = 1; x <= limit ; x++)
 	{
@@ -494,7 +494,7 @@ unittest
 	assert(!stack.byValue.canFind(1));
 	assert(!stack.byValue.canFind(limit));
 	assert(stack.byValue.length == 0);
-	assert(stack.capacity == 10_000);
+	assert(stack.capacity == 8_192);
 }
 
 unittest

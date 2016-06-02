@@ -3,7 +3,7 @@
 	"description": "Common libraries for D language programs",
 	"homepage": "https://github.com/nomad-software/etcetera",
 	"authors": ["Gary Willoughby"],
-	"copyright": "Copyright (c) 2015 Gary Willoughby",
+	"copyright": "Copyright (c) 2016 Gary Willoughby",
 	"license": "MIT",
 	"configurations": [
 		{

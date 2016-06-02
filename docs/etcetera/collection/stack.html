@@ -46,12 +46,12 @@ stack.clear();
 <span class="keyword">assert</span>(stack.count == 0);
 </pre>
 </p></div>
-<div class="class-members"><h2><a name="Stack.this"></a>final nothrow this(size_t minCapacity = 10000);
+<div class="class-members"><h2><a name="Stack.this"></a>final nothrow this(size_t minCapacity = 8192);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Construct a new stack.
 </p>
-<p>By default the stack is allocated enough memory for 10,000 items. If
- more items are added, the stack can grow by doubling its allocation, ad
+<p>By default the stack is allocated enough memory for 8,192 items. If more
+ items are added, the stack can grow by doubling its allocation, ad
  infinitum. If the items within reduce to only use half of the current
  allocation the stack will half it. The stack will never shrink below the
  minimum capacity amount.
@@ -172,7 +172,7 @@ stack.push(<span class="string">"Baz"</span>);
 </p>
 </div>
 </div>
-<h2><a name="Stack.opApply"></a>final int <span class="symbol">opApply</span>(ForeachAggregate!T dg);
+<h2><a name="Stack.opApply"></a>final nothrow int <span class="symbol">opApply</span>(ForeachAggregate!T dg);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Enable forward iteration in foreach loops.
 </p>
@@ -202,7 +202,7 @@ stack.push(<span class="string">"Baz"</span>);
 </p>
 </div>
 </div>
-<h2><a name="Stack.opApply.2"></a>final int <span class="symbol">opApply</span>(IndexedForeachAggregate!T dg);
+<h2><a name="Stack.opApply.2"></a>final nothrow int <span class="symbol">opApply</span>(IndexedForeachAggregate!T dg);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Enable forward iteration in foreach loops using an index.
 </p>

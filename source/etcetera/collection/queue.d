@@ -66,10 +66,10 @@ class Queue(T)
 	/**
 	 * Construct a new queue.
 	 *
-	 * By default the queue is allocated enough memory for 10,000 items. If 
-	 * more items are added, the queue can grow by doubling its allocation, ad 
-	 * infinitum. If the items within reduce to only use half of the current 
-	 * allocation the queue will half it. The queue will never shrink below the 
+	 * By default the queue is allocated enough memory for 8,192 items. If more
+	 * items are added, the queue can grow by doubling its allocation, ad
+	 * infinitum. If the items within reduce to only use half of the current
+	 * allocation the queue will half it. The queue will never shrink below the
 	 * minimum capacity amount.
 	 *
 	 * Params:
@@ -82,7 +82,7 @@ class Queue(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory allocation fails.)
 	 *     )
 	 */
-	final public this(size_t minCapacity = 10_000) nothrow
+	final public this(size_t minCapacity = 8_192) nothrow
 	{
 		assert(minCapacity >= 1, "Queue must allow for at least one item.");
 
@@ -125,7 +125,7 @@ class Queue(T)
 	}
 
 	/**
-	 * The current item capacity of the queue. This will change if the queue 
+	 * The current item capacity of the queue. This will change if the queue
 	 * reallocates more memory.
 	 *
 	 * Returns:
@@ -139,7 +139,7 @@ class Queue(T)
 	/**
 	 * Add an item to the queue.
 	 *
-	 * This method reallocates and doubles the memory used by the queue if no 
+	 * This method reallocates and doubles the memory used by the queue if no
 	 * more items can be stored in available memory.
 	 *
 	 * Params:
@@ -204,7 +204,7 @@ class Queue(T)
 	/**
 	 * Remove and return the front item in the queue.
 	 *
-	 * This method reallocates the memory used by the queue, halfing it if 
+	 * This method reallocates the memory used by the queue, halfing it if
 	 * half will adequately hold all the items.
 	 *
 	 * Returns:
@@ -262,7 +262,7 @@ class Queue(T)
 	/**
 	 * Check if a value is contained in the queue.
 	 *
-	 * This is a simple linear search and can take quite some time with large 
+	 * This is a simple linear search and can take quite some time with large
 	 * queues.
 	 *
 	 * Params:
@@ -309,7 +309,7 @@ class Queue(T)
 	/**
 	 * Clears the queue.
 	 *
-	 * This method reallocates the memory used by the queue to the minimum size 
+	 * This method reallocates the memory used by the queue to the minimum size
 	 * if more is currently allocated.
 	 *
 	 * Throws:
@@ -333,7 +333,7 @@ class Queue(T)
 	}
 
 	/**
-	 * Return a forward range to allow this queue to be used with various 
+	 * Return a forward range to allow this queue to be used with various
 	 * other algorithms.
 	 *
 	 * Returns:
@@ -429,7 +429,7 @@ class Queue(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(ForeachAggregate!(T) dg)
+	final public int opApply(ForeachAggregate!(T) dg) nothrow
 	{
 		int result   = 0;
 		T* front     = this._front;
@@ -484,7 +484,7 @@ class Queue(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(IndexedForeachAggregate!(T) dg)
+	final public int opApply(IndexedForeachAggregate!(T) dg) nothrow
 	{
 		int result   = 0;
 		T* front     = this._front;
@@ -551,7 +551,7 @@ unittest
 
 	assert(queue.empty);
 	assert(queue.count == 0);
-	assert(queue.capacity == 10_000);
+	assert(queue.capacity == 8_192);
 
 	int limit = 1_000_000;
 
@@ -570,7 +570,7 @@ unittest
 	assert(queue.byValue.canFind(limit));
 	assert(queue.byValue.length == limit);
 	assert(!queue.empty);
-	assert(queue.capacity == 1_280_000);
+	assert(queue.capacity == 1_048_576);
 
 	for (int x = 1; x <= limit ; x++)
 	{
@@ -580,7 +580,7 @@ unittest
 	}
 
 	assert(queue.empty);
-	assert(queue.capacity == 10_000);
+	assert(queue.capacity == 8_192);
 
 	for (int x = 1; x <= limit ; x++)
 	{
@@ -598,7 +598,7 @@ unittest
 	assert(!queue.byValue.canFind(1));
 	assert(!queue.byValue.canFind(limit));
 	assert(queue.byValue.length == 0);
-	assert(queue.capacity == 10_000);
+	assert(queue.capacity == 8_192);
 }
 
 unittest
