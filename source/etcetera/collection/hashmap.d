@@ -15,9 +15,6 @@ import etcetera.meta;
 import std.algorithm;
 import std.traits;
 
-	import std.stdio;
-	import std.array;
-
 /**
  * A payload stored inside the bucket linked list.
  *
@@ -328,15 +325,10 @@ class HashMap(K, V)
 	 */
 	final public void clear() nothrow
 	{
-		for (auto bucket = this._data; bucket < this._data + this._bucketNumber; bucket++)
-		{
-			if (*bucket !is null)
-			{
-				(*bucket).clear();
-			}
-		}
+		GC.free(this._data);
 
-		this.resize(this._minBuckets);
+		this._data  = cast(Bucket*)GC.calloc(this._minBuckets * Bucket.sizeof, GC.BlkAttr.NO_MOVE, typeid(Bucket));
+		this._count = 0;
 	}
 
 	/**
