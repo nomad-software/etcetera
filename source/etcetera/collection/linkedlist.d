@@ -485,33 +485,43 @@ class LinkedList(T)
 			if (index >= this._count / 2)
 			{
 				size_t listIndex = this._count - 1;
-				for (auto listNode = this._last; listNode !is null; listIndex--, listNode = (*listNode).prev)
+				auto node = this._last;
+
+				while (node !is null)
 				{
 					if (listIndex == index)
 					{
-						(*(*listNode).prev).next = (*listNode).next;
-						(*(*listNode).next).prev = (*listNode).prev;
-						GC.removeRoot(listNode);
-						GC.free(listNode);
+						(*(*node).prev).next = (*node).next;
+						(*(*node).next).prev = (*node).prev;
+						GC.removeRoot(node);
+						GC.free(node);
 						this._count--;
 						break;
 					}
+
+					node = (*node).prev;
+					listIndex--;
 				}
 			}
 			else
 			{
 				size_t listIndex;
-				for (auto listNode = this._first; listNode !is null; listIndex++, listNode = (*listNode).next)
+				auto node = this._first;
+
+				while (node !is null)
 				{
 					if (listIndex == index)
 					{
-						(*(*listNode).prev).next = (*listNode).next;
-						(*(*listNode).next).prev = (*listNode).prev;
-						GC.removeRoot(listNode);
-						GC.free(listNode);
+						(*(*node).prev).next = (*node).next;
+						(*(*node).next).prev = (*node).prev;
+						GC.removeRoot(node);
+						GC.free(node);
 						this._count--;
 						break;
 					}
+
+					node = (*node).next;
+					listIndex++;
 				}
 			}
 		}
@@ -546,10 +556,17 @@ class LinkedList(T)
 	 */
 	final public void clear() nothrow
 	{
-		for (auto node = this._first; node !is null; node = (*node).next)
+		auto node = this._first;
+		auto next = this._first;
+
+		while (next !is null)
 		{
+			next = (*node).next;
+
 			GC.removeRoot(node);
 			GC.free(node);
+
+			node = next;
 		}
 
 		this._count = 0;
