@@ -15,30 +15,6 @@ import std.range;
 import std.traits;
 
 /**
- * A node in the linked list.
- *
- * Params:
- *     T = The type stored in each node in the list.
- */
-private struct Node(T)
-{
-	/**
-	 * The previous node.
-	 */
-	public Node!(T)* prev;
-
-	/**
-	 * The next node.
-	 */
-	public Node!(T)* next;
-
-	/**
-	 * The node data.
-	 */
-	public T data;
-}
-
-/**
  * A generic doubly linked list implementation.
  *
  * Params:
@@ -47,14 +23,38 @@ private struct Node(T)
 class LinkedList(T)
 {
 	/**
+	 * A node in the linked list.
+	 *
+	 * Params:
+	 *     T = The type stored in each node in the list.
+	 */
+	private static struct Node
+	{
+		/**
+		 * The previous node.
+		 */
+		public Node* prev;
+
+		/**
+		 * The next node.
+		 */
+		public Node* next;
+
+		/**
+		 * The node data.
+		 */
+		public T data;
+	}
+
+	/**
 	 * The starting node.
 	 */
-	private Node!(T)* _first;
+	private Node* _first;
 
 	/**
 	 * The last node.
 	 */
-	private Node!(T)* _last;
+	private Node* _last;
 
 	/**
 	 * The number of items in the list.
@@ -134,12 +134,12 @@ class LinkedList(T)
 	{
 		static if (hasIndirections!(T))
 		{
-			auto node = cast(Node!(T)*)GC.malloc(Node!(T).sizeof, GC.BlkAttr.NO_MOVE, typeid(T));
+			auto node = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE, typeid(Node));
 			GC.addRoot(node);
 		}
 		else
 		{
-			auto node = cast(Node!(T)*)GC.malloc(Node!(T).sizeof, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(T));
+			auto node = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(Node));
 			GC.addRoot(node);
 		}
 
@@ -203,12 +203,12 @@ class LinkedList(T)
 	{
 		static if (hasIndirections!(T))
 		{
-			auto node = cast(Node!(T)*)GC.malloc(Node!(T).sizeof, GC.BlkAttr.NO_MOVE, typeid(T));
+			auto node = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE, typeid(Node));
 			GC.addRoot(node);
 		}
 		else
 		{
-			auto node = cast(Node!(T)*)GC.malloc(Node!(T).sizeof, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(T));
+			auto node = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(Node));
 			GC.addRoot(node);
 		}
 
@@ -291,12 +291,12 @@ class LinkedList(T)
 		{
 			static if (hasIndirections!(T))
 			{
-				auto newNode = cast(Node!(T)*)GC.malloc(Node!(T).sizeof, GC.BlkAttr.NO_MOVE, typeid(T));
+				auto newNode = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE, typeid(Node));
 				GC.addRoot(newNode);
 			}
 			else
 			{
-				auto newNode = cast(Node!(T)*)GC.malloc(Node!(T).sizeof, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(T));
+				auto newNode = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(Node));
 				GC.addRoot(newNode);
 			}
 
@@ -602,8 +602,8 @@ class LinkedList(T)
 	{
 		static struct Result
 		{
-			private Node!(T)* _first;
-			private Node!(T)* _last;
+			private Node* _first;
+			private Node* _last;
 			private size_t _count;
 
 			public @property ref T front()
