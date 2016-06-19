@@ -14,7 +14,7 @@
 </p>
 <h3>License</h3><p>MIT. See LICENSE for full details.</p>
 </div>
-<div class="module-members"><h2><a name="Stack"></a>class <span class="symbol">Stack</span>(T);
+<div class="module-members"><h2><a name="Stack"></a>struct <span class="symbol">Stack</span>(T);
 </h2>
 <div class="declaration-description"><div class="sections"><p>A generic last-in-first-out (LIFO) stack implementation.
 </p>
@@ -23,9 +23,10 @@
 </table>
 <h3>Examples</h3><p><pre>
 <span class="keyword">import</span> std.algorithm;
+<span class="keyword">import</span> std.range;
 <span class="keyword">import</span> std.string;
 
-<span class="keyword">auto</span> stack = <span class="keyword">new</span> <span class="symbol">Stack</span>!(string);
+<span class="keyword">auto</span> stack = stack!(string);
 
 stack.push(<span class="string">"Foo"</span>);
 stack.push(<span class="string">"Bar"</span>);
@@ -46,7 +47,7 @@ stack.clear();
 <span class="keyword">assert</span>(stack.count == 0);
 </pre>
 </p></div>
-<div class="class-members"><h2><a name="Stack.this"></a>final nothrow this(size_t minCapacity = 8192);
+<div class="struct-members"><h2><a name="Stack.this"></a>this(size_t minCapacity);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Construct a new stack.
 </p>
@@ -66,21 +67,21 @@ stack.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="Stack.count"></a>final const pure nothrow @property size_t <span class="symbol">count</span>();
+<h2><a name="Stack.count"></a>const pure @property size_t <span class="symbol">count</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Get the number of items stored in the stack.
 </p>
 <h3>Return Value</h3><p>The number of items stored in the stack.</p>
 </div>
 </div>
-<h2><a name="Stack.empty"></a>final const pure nothrow @property bool <span class="symbol">empty</span>();
+<h2><a name="Stack.empty"></a>const pure @property bool <span class="symbol">empty</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Test if the stack is <span class="symbol">empty</span> or not.
 </p>
 <h3>Return Value</h3><p><strong>true</strong> if the stack is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
 </div>
 </div>
-<h2><a name="Stack.push"></a>final nothrow void <span class="symbol">push</span>(T item);
+<h2><a name="Stack.push"></a>void <span class="symbol">push</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Push an item onto the stack.
 </p>
@@ -95,7 +96,7 @@ stack.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="Stack.peek"></a>final pure nothrow T <span class="symbol">peek</span>();
+<h2><a name="Stack.peek"></a>pure T <span class="symbol">peek</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Return the last item pushed onto the stack but don't remove it.
 </p>
@@ -106,7 +107,7 @@ stack.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="Stack.pop"></a>final nothrow T <span class="symbol">pop</span>();
+<h2><a name="Stack.pop"></a>T <span class="symbol">pop</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Remove and return the last item pushed onto the stack.
 </p>
@@ -122,7 +123,7 @@ stack.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="Stack.contains"></a>final bool <span class="symbol">contains</span>(T item);
+<h2><a name="Stack.contains"></a>pure bool <span class="symbol">contains</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Check if a value is contained in the stack.
 </p>
@@ -136,7 +137,7 @@ stack.clear();
 <h3>Return Value</h3><p><strong>true</strong> if the item is found on the stack, <strong>false</strong> if not.</p>
 </div>
 </div>
-<h2><a name="Stack.clear"></a>final nothrow void <span class="symbol">clear</span>();
+<h2><a name="Stack.clear"></a>void <span class="symbol">clear</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Clears the stack.
 </p>
@@ -148,7 +149,7 @@ stack.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="Stack.byValue"></a>final pure nothrow auto <span class="symbol">byValue</span>();
+<h2><a name="Stack.byValue"></a>pure auto <span class="symbol">byValue</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Return a forward range to allow this stack to be used with various
  other algorithms.
@@ -160,7 +161,7 @@ stack.clear();
 <pre><span class="keyword">import</span> std.algorithm;
 <span class="keyword">import</span> std.string;
 
-<span class="keyword">auto</span> stack = <span class="keyword">new</span> Stack!(string);
+<span class="keyword">auto</span> stack = stack!(string);
 
 stack.push(<span class="string">"Foo"</span>);
 stack.push(<span class="string">"Bar"</span>);
@@ -172,66 +173,16 @@ stack.push(<span class="string">"Baz"</span>);
 </p>
 </div>
 </div>
-<h2><a name="Stack.opApply"></a>final nothrow int <span class="symbol">opApply</span>(ForeachAggregate!T dg);
+</div>
+</div>
+<h2><a name="stack"></a>auto <span class="symbol">stack</span>(T)(size_t minCapacity = 64);
 </h2>
-<div class="declaration-description"><div class="sections"><p>Enable forward iteration in foreach loops.
+<div class="declaration-description"><div class="sections"><p>Convenience function for creating stacks.
 </p>
-<h3>Parameters</h3><table class="parameter-list"><tr><td>ForeachAggregate!T dg</td>
-<td>A delegate that replaces the foreach loop.</td></tr>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>size_t minCapacity</td>
+<td>The minimum number of items to allocate space for.
+                   The <span class="symbol">stack</span> will never shrink below this allocation.</td></tr>
 </table>
-<h3>Return Value</h3><p>A return value to determine if the loop should continue.
-
-</p>
-<h3>See Also</h3><p><a href="http://ddili.org/ders/d.en/foreach_opapply.html">http://ddili.org/ders/d.en/foreach_opapply.html</a>
-
-</p>
-<p><h3>Example:</h3>
-<pre><span class="keyword">import</span> std.stdio;
-
-<span class="keyword">auto</span> stack = <span class="keyword">new</span> Stack!(string);
-
-stack.push(<span class="string">"Foo"</span>);
-stack.push(<span class="string">"Bar"</span>);
-stack.push(<span class="string">"Baz"</span>);
-
-<span class="keyword">foreach</span> (value; stack)
-{
-	writefln(<span class="string">"%s"</span>, value);
-}
-</pre>
-</p>
-</div>
-</div>
-<h2><a name="Stack.opApply.2"></a>final nothrow int <span class="symbol">opApply</span>(IndexedForeachAggregate!T dg);
-</h2>
-<div class="declaration-description"><div class="sections"><p>Enable forward iteration in foreach loops using an index.
-</p>
-<h3>Parameters</h3><table class="parameter-list"><tr><td>IndexedForeachAggregate!T dg</td>
-<td>A delegate that replaces the foreach loop.</td></tr>
-</table>
-<h3>Return Value</h3><p>A return value to determine if the loop should continue.
-
-</p>
-<h3>See Also</h3><p><a href="http://ddili.org/ders/d.en/foreach_opapply.html">http://ddili.org/ders/d.en/foreach_opapply.html</a>
-
-</p>
-<p><h3>Example:</h3>
-<pre><span class="keyword">import</span> std.stdio;
-
-<span class="keyword">auto</span> stack = <span class="keyword">new</span> Stack!(string);
-
-stack.push(<span class="string">"Foo"</span>);
-stack.push(<span class="string">"Bar"</span>);
-stack.push(<span class="string">"Baz"</span>);
-
-<span class="keyword">foreach</span> (index, value; stack)
-{
-	writefln(<span class="string">"%s: %s"</span>, index, value);
-}
-</pre>
-</p>
-</div>
-</div>
 </div>
 </div>
 </div>

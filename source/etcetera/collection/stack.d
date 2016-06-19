@@ -9,9 +9,10 @@ module etcetera.collection.stack;
 /**
  * Imports.
  */
+import core.exception;
 import core.memory;
+import core.stdc.stdlib : malloc, calloc, realloc, free;
 import core.stdc.string : memset;
-import etcetera.meta;
 import std.range;
 import std.traits;
 
@@ -21,8 +22,16 @@ import std.traits;
  * Params:
  *     T = The type stored in the stack.
  */
-class Stack(T)
+struct Stack(T)
 {
+	@nogc:
+	nothrow:
+
+	/**
+	 * The reference count.
+	 */
+	private int* _refCount;
+
 	/**
 	 * A pointer to the stack data.
 	 */
@@ -36,7 +45,7 @@ class Stack(T)
 	/**
 	 * The minimum size in bytes that the stack will allocate.
 	 */
-	private immutable size_t _minSize;
+	private size_t _minSize;
 
 	/**
 	 * The current size in bytes of the stack.
@@ -47,6 +56,11 @@ class Stack(T)
 	 * The number of items currently held in the stack.
 	 */
 	private size_t _count;
+
+	/*
+	 * Disable the default constructor.
+	 */
+	@disable this();
 
 	/**
 	 * Construct a new stack.
@@ -67,23 +81,52 @@ class Stack(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory allocation fails.)
 	 *     )
 	 */
-	final public this(size_t minCapacity = 8_192) nothrow
+	public this(size_t minCapacity)
 	{
 		assert(minCapacity >= 1, "Stack must allow for at least one item.");
 
-		this._minSize = minCapacity * T.sizeof;
-		this._size    = this._minSize;
+		this._refCount  = cast(int*) malloc(int.sizeof);
+		*this._refCount = 1;
+
+		this._minSize  = minCapacity * T.sizeof;
+		this._size     = this._minSize;
+		this._data     = cast(T*) calloc(minCapacity, T.sizeof);
+
+		if (this._data is null)
+		{
+			onOutOfMemoryError();
+		}
 
 		static if (hasIndirections!(T))
 		{
-			this._data = cast(T*)GC.calloc(this._size, GC.BlkAttr.NO_MOVE, typeid(T));
-		}
-		else
-		{
-			this._data = cast(T*)GC.calloc(this._size, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(T));
+			GC.addRange(this._data, this._size, typeid(T));
 		}
 
 		this._pointer = this._data - 1;
+	}
+
+	/**
+	 * Copy constructor post blit.
+	 */
+	private this(this) pure
+	{
+		*this._refCount += 1;
+	}
+
+	/**
+	 * Destructor.
+	 */
+	private ~this()
+	{
+		*this._refCount -= 1;
+
+		if (*this._refCount <= 0)
+		{
+			GC.removeRange(this._data);
+
+			free(this._refCount);
+			free(this._data);
+		}
 	}
 
 	/**
@@ -92,7 +135,7 @@ class Stack(T)
 	 * Returns:
 	 *     The number of items stored in the stack.
 	 */
-	final public @property size_t count() const nothrow pure
+	public @property size_t count() const pure
 	{
 		return this._count;
 	}
@@ -103,7 +146,7 @@ class Stack(T)
 	 * Returns:
 	 *     true if the stack is empty, false if not.
 	 */
-	final public @property bool empty() const nothrow pure
+	public @property bool empty() const pure
 	{
 		return (this._count == 0);
 	}
@@ -115,7 +158,7 @@ class Stack(T)
 	 * Returns:
 	 *     The capacity of how many items the stack can hold.
 	 */
-	final private @property size_t capacity() const nothrow pure
+	private @property size_t capacity() const pure
 	{
 		return this._size / T.sizeof;
 	}
@@ -134,14 +177,27 @@ class Stack(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
-	final public void push(T item) nothrow
+	public void push(T item)
 	{
 		this._pointer++;
 
 		if (this._count == this.capacity)
 		{
-			this._size   *= 2;
-			this._data    = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
+			GC.removeRange(this._data);
+
+			this._size *= 2;
+			this._data  = cast(T*) realloc(this._data, this._size);
+
+			if (this._data is null)
+			{
+				onOutOfMemoryError();
+			}
+
+			static if (hasIndirections!(T))
+			{
+				GC.addRange(this._data, this._size, typeid(T));
+			}
+
 			this._pointer = this._data + this._count;
 
 			memset(this._pointer, 0, this._size / 2);
@@ -163,7 +219,7 @@ class Stack(T)
 	 *         $(PARAM_ROW AssertError, If the stack is empty.)
 	 *     )
 	 */
-	final public T peek() nothrow pure
+	public T peek() pure
 	{
 		assert(this._count, "Stack empty, peeking failed.");
 
@@ -185,19 +241,30 @@ class Stack(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
-	final public T pop() nothrow
+	public T pop()
 	{
 		assert(this._count, "Stack empty, popping failed.");
 
-		static T popped;
-
 		this._count--;
-		popped = *this._pointer;
+		auto popped = *this._pointer;
 
 		if ((this._count <= (this.capacity / 2)) && ((this._size / 2) >= this._minSize))
 		{
-			this._size   /= 2;
-			this._data    = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
+			GC.removeRange(this._data);
+
+			this._size /= 2;
+			this._data  = cast(T*) realloc(this._data, this._size);
+
+			if (this._data is null)
+			{
+				onOutOfMemoryError();
+			}
+
+			static if (hasIndirections!(T))
+			{
+				GC.addRange(this._data, this._size, typeid(T));
+			}
+
 			this._pointer = this._data + (this._count - 1);
 		}
 		else
@@ -221,13 +288,23 @@ class Stack(T)
 	 * Returns:
 	 *     true if the item is found on the stack, false if not.
 	 */
-	final public bool contains(T item)
+	public bool contains(T item) pure
 	{
 		for (T* x = this._data; x < this._data + this._count ; x++)
 		{
-			if (*x == item)
+			static if (is(T == class) || is(T == interface))
 			{
-				return true;
+				if (*x is item)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				if (*x == item)
+				{
+					return true;
+				}
 			}
 		}
 		return false;
@@ -244,12 +321,24 @@ class Stack(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
-	final public void clear() nothrow
+	public void clear()
 	{
 		if (this._size > this._minSize)
 		{
+			GC.removeRange(this._data);
+
 			this._size = this._minSize;
-			this._data = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
+			this._data = cast(T*) realloc(this._data, this._size);
+
+			if (this._data is null)
+			{
+				onOutOfMemoryError();
+			}
+
+			static if (hasIndirections!(T))
+			{
+				GC.addRange(this._data, this._size, typeid(T));
+			}
 		}
 
 		memset(this._data, 0, this._size);
@@ -270,7 +359,7 @@ class Stack(T)
 	 * import std.algorithm;
 	 * import std.string;
 	 *
-	 * auto stack = new Stack!(string);
+	 * auto stack = stack!(string);
 	 *
 	 * stack.push("Foo");
 	 * stack.push("Bar");
@@ -280,7 +369,7 @@ class Stack(T)
 	 * assert(stack.byValue.map!(toLower).array == ["baz", "bar", "foo"]);
 	 * ---
 	 */
-	final public auto byValue() nothrow pure
+	public auto byValue() pure
 	{
 		static struct Result
 		{
@@ -319,106 +408,16 @@ class Stack(T)
 
 		return Result(this._data, this._pointer, this._count);
 	}
-
-	/**
-	 * Enable forward iteration in foreach loops.
-	 *
-	 * Params:
-	 *     dg = A delegate that replaces the foreach loop.
-	 *
-	 * Returns:
-	 *     A return value to determine if the loop should continue.
-	 *
-	 * See_Also:
-	 *     $(LINK http://ddili.org/ders/d.en/foreach_opapply.html)
-	 *
-	 * Example:
-	 * ---
-	 * import std.stdio;
-	 *
-	 * auto stack = new Stack!(string);
-	 *
-	 * stack.push("Foo");
-	 * stack.push("Bar");
-	 * stack.push("Baz");
-	 *
-	 * foreach (value; stack)
-	 * {
-	 * 	writefln("%s", value);
-	 * }
-	 * ---
-	 */
-	final public int opApply(ForeachAggregate!(T) dg) nothrow
-	{
-		int result;
-
-		for (T* pointer = this._pointer; pointer >= this._data; pointer--)
-		{
-			result = dg(*pointer);
-
-			if (result)
-			{
-				break;
-			}
-		}
-
-		return result;
-	}
-
-	/**
-	 * Enable forward iteration in foreach loops using an index.
-	 *
-	 * Params:
-	 *     dg = A delegate that replaces the foreach loop.
-	 *
-	 * Returns:
-	 *     A return value to determine if the loop should continue.
-	 *
-	 * See_Also:
-	 *     $(LINK http://ddili.org/ders/d.en/foreach_opapply.html)
-	 *
-	 * Example:
-	 * ---
-	 * import std.stdio;
-	 *
-	 * auto stack = new Stack!(string);
-	 *
-	 * stack.push("Foo");
-	 * stack.push("Bar");
-	 * stack.push("Baz");
-	 *
-	 * foreach (index, value; stack)
-	 * {
-	 * 	writefln("%s: %s", index, value);
-	 * }
-	 * ---
-	 */
-	final public int opApply(IndexedForeachAggregate!(T) dg) nothrow
-	{
-		int result;
-		size_t index;
-
-		for (T* pointer = this._pointer; pointer >= this._data; index++, pointer--)
-		{
-			result = dg(index, *pointer);
-
-			if (result)
-			{
-				break;
-			}
-		}
-
-		return result;
-	}
 }
 
 ///
 unittest
 {
 	import std.algorithm;
+	import std.range;
 	import std.string;
 
-	auto stack = new Stack!(string);
+	auto stack = stack!(string);
 
 	stack.push("Foo");
 	stack.push("Bar");
@@ -439,11 +438,67 @@ unittest
 	assert(stack.count == 0);
 }
 
+/**
+ * Convenience function for creating stacks.
+ *
+ * Params:
+ *     minCapacity = The minimum number of items to allocate space for.
+ *                   The stack will never shrink below this allocation.
+ */
+public auto stack(T)(size_t minCapacity = 64)
+{
+	return Stack!(T)(minCapacity);
+}
+
+// Test reference counting.
+
+unittest
+{
+	auto foo(T)(T stack)
+	{
+		assert(*stack._refCount == 2);
+	}
+
+	auto bar(T)(ref T stack)
+	{
+		assert(*stack._refCount == 1);
+	}
+
+	auto baz(T)(T stack)
+	{
+		assert(*stack._refCount == 1);
+		return stack;
+	}
+
+	auto qux()
+	{
+		return Stack!(string)(1);
+	}
+
+	auto stack = Stack!(string)(16);
+
+	assert(*stack._refCount == 1);
+
+	foo(stack);
+	assert(*stack._refCount == 1);
+
+	bar(stack);
+	assert(*stack._refCount == 1);
+
+	stack = baz(Stack!(string)(1));
+	assert(*stack._refCount == 1);
+
+	stack = qux();
+	assert(*stack._refCount == 1);
+}
+
+// Test big datasets.
+
 unittest
 {
 	import std.algorithm;
 
-	auto stack = new Stack!(int);
+	auto stack = Stack!(int)(8_192);
 
 	assert(stack.empty);
 	assert(stack.count == 0);
@@ -497,9 +552,11 @@ unittest
 	assert(stack.capacity == 8_192);
 }
 
+// Test the memory layout.
+
 unittest
 {
-	auto stack = new Stack!(byte)(4);
+	auto stack = Stack!(byte)(4);
 
 	assert(stack.capacity == 4);
 	assert(stack._data[0 .. 4] == [0, 0, 0, 0]);
@@ -527,35 +584,79 @@ unittest
 	assert(stack._data[0 .. 4] == [0, 0, 0, 0]);
 }
 
+// Test storing objects.
+
 unittest
 {
 	class Foo
 	{
 		private int _foo;
 
-		public this(int foo) nothrow
+		public this(int foo)
 		{
 			this._foo = foo;
 		}
 	}
 
-	auto stack = new Stack!(Foo)(4);
+	auto stack = Stack!(Foo)(1);
+	auto foo   = new Foo(1);
 
-	stack.push(new Foo(1));
+	stack.push(foo);
 	stack.push(new Foo(2));
 	stack.push(new Foo(3));
 
+	assert(stack.contains(foo));
+	assert(!stack.contains(new Foo(1)));
 	assert(stack.pop()._foo == 3);
-	assert(stack.pop()._foo == 2);
+
+	stack.clear();
+}
+
+// Test storing interfaces.
+
+unittest
+{
+	interface Foo
+	{
+		public void foo();
+	}
+
+	auto foo = Stack!(Foo)(16);
+}
+
+// Test storing structs.
+
+unittest
+{
+	struct Foo
+	{
+		private int _foo;
+
+		public this(int foo)
+		{
+			this._foo = foo;
+		}
+	}
+
+	auto stack = Stack!(Foo)(16);
+	auto foo   = Foo(1);
+
+	stack.push(foo);
+
+	assert(stack.contains(foo));
+	assert(!stack.contains(Foo(2)));
 	assert(stack.pop()._foo == 1);
 }
+
+// Test the range interface.
 
 unittest
 {
 	import std.algorithm;
+	import std.range;
 	import std.string;
 
-	auto stack = new Stack!(string);
+	auto stack = Stack!(string)(16);
 
 	stack.push("Foo");
 	stack.push("Bar");
@@ -564,47 +665,5 @@ unittest
 	assert(stack.byValue.canFind("Baz"));
 	assert(stack.byValue.map!(toLower).array == ["baz", "bar", "foo"]);
 	assert(stack.byValue.save.array == ["Baz", "Bar", "Foo"]);
-}
-
-unittest
-{
-	auto stack = new Stack!(string);
-
-	stack.push("Foo");
-	stack.push("Bar");
-	stack.push("Baz");
-	stack.push("Qux");
-
-	size_t counter;
-	auto data  = ["Qux", "Baz", "Bar", "Foo"];
-
-	foreach (value; stack.byValue)
-	{
-		assert(value == data[counter++]);
-	}
-
-	counter = 0;
-	foreach (value; stack.byValue.save)
-	{
-		assert(value == data[counter++]);
-	}
-
-	counter = 0;
-	foreach (value; stack)
-	{
-		assert(value == data[counter++]);
-	}
-
-	counter = 0;
-	foreach (index, value; stack)
-	{
-		assert(index == counter);
-		assert(value == data[counter++]);
-	}
-
-	assert(stack.pop() == "Qux");
-	assert(stack.pop() == "Baz");
-	assert(stack.pop() == "Bar");
-	assert(stack.pop() == "Foo");
 }
 
