@@ -18,7 +18,7 @@ module etcetera.meta.foreachaggregate;
  */
 public template ForeachAggregate(T)
 {
-	alias ForeachAggregate = int delegate(ref T) nothrow;
+	alias ForeachAggregate = int delegate(ref T) nothrow @nogc;
 }
 
 ///

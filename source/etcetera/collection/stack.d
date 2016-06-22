@@ -13,6 +13,7 @@ import core.exception;
 import core.memory;
 import core.stdc.stdlib : malloc, calloc, realloc, free;
 import core.stdc.string : memset;
+import etcetera.meta;
 import std.range;
 import std.traits;
 
@@ -88,9 +89,9 @@ struct Stack(T)
 		this._refCount  = cast(int*) malloc(int.sizeof);
 		*this._refCount = 1;
 
-		this._minSize  = minCapacity * T.sizeof;
-		this._size     = this._minSize;
-		this._data     = cast(T*) calloc(minCapacity, T.sizeof);
+		this._minSize = minCapacity * T.sizeof;
+		this._size    = this._minSize;
+		this._data    = cast(T*) calloc(minCapacity, T.sizeof);
 
 		if (this._data is null)
 		{
@@ -108,7 +109,7 @@ struct Stack(T)
 	/**
 	 * Copy constructor post blit.
 	 */
-	private this(this) pure
+	public this(this) pure
 	{
 		*this._refCount += 1;
 	}
@@ -116,7 +117,7 @@ struct Stack(T)
 	/**
 	 * Destructor.
 	 */
-	private ~this()
+	public ~this()
 	{
 		*this._refCount -= 1;
 
@@ -292,6 +293,8 @@ struct Stack(T)
 	{
 		for (T* x = this._data; x < this._data + this._count ; x++)
 		{
+			// For the time being we have to handle classes and interfaces as a
+			// special case when comparing because Object.opEquals is not @nogc.
 			static if (is(T == class) || is(T == interface))
 			{
 				if (*x is item)
@@ -408,6 +411,97 @@ struct Stack(T)
 
 		return Result(this._data, this._pointer, this._count);
 	}
+
+	/**
+	 * Enable forward iteration in foreach loops.
+	 *
+	 * Params:
+	 *     dg = A delegate that replaces the foreach loop.
+	 *
+	 * Returns:
+	 *     A return value to determine if the loop should continue.
+	 *
+	 * See_Also:
+	 *     $(LINK http://ddili.org/ders/d.en/foreach_opapply.html)
+	 *
+	 * Example:
+	 * ---
+	 * import std.stdio;
+	 *
+	 * auto stack = Stack!(string)(4);
+	 *
+	 * stack.push("Foo");
+	 * stack.push("Bar");
+	 * stack.push("Baz");
+	 *
+	 * foreach (value; stack)
+	 * {
+	 * 	writefln("%s", value);
+	 * }
+	 * ---
+	 */
+	final public int opApply(scope ForeachAggregate!(T) dg)
+	{
+		int result;
+
+		for (T* pointer = this._pointer; pointer >= this._data; pointer--)
+		{
+			result = dg(*pointer);
+
+			if (result)
+			{
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Enable forward iteration in foreach loops using an index.
+	 *
+	 * Params:
+	 *     dg = A delegate that replaces the foreach loop.
+	 *
+	 * Returns:
+	 *     A return value to determine if the loop should continue.
+	 *
+	 * See_Also:
+	 *     $(LINK http://ddili.org/ders/d.en/foreach_opapply.html)
+	 *
+	 * Example:
+	 * ---
+	 * import std.stdio;
+	 *
+	 * auto stack = Stack!(string)(4);
+	 *
+	 * stack.push("Foo");
+	 * stack.push("Bar");
+	 * stack.push("Baz");
+	 *
+	 * foreach (index, value; stack)
+	 * {
+	 * 	writefln("%s: %s", index, value);
+	 * }
+	 * ---
+	 */
+	final public int opApply(scope IndexedForeachAggregate!(T) dg)
+	{
+		int result;
+		size_t index;
+
+		for (T* pointer = this._pointer; pointer >= this._data; index++, pointer--)
+		{
+			result = dg(index, *pointer);
+
+			if (result)
+			{
+				break;
+			}
+		}
+
+		return result;
+	}
 }
 
 ///
@@ -417,7 +511,7 @@ unittest
 	import std.range;
 	import std.string;
 
-	auto stack = stack!(string);
+	auto stack = Stack!(string)(8);
 
 	stack.push("Foo");
 	stack.push("Bar");
@@ -436,18 +530,6 @@ unittest
 	assert(!stack.contains("Foo"));
 	assert(stack.empty);
 	assert(stack.count == 0);
-}
-
-/**
- * Convenience function for creating stacks.
- *
- * Params:
- *     minCapacity = The minimum number of items to allocate space for.
- *                   The stack will never shrink below this allocation.
- */
-public auto stack(T)(size_t minCapacity = 64)
-{
-	return Stack!(T)(minCapacity);
 }
 
 // Test reference counting.
@@ -665,5 +747,49 @@ unittest
 	assert(stack.byValue.canFind("Baz"));
 	assert(stack.byValue.map!(toLower).array == ["baz", "bar", "foo"]);
 	assert(stack.byValue.save.array == ["Baz", "Bar", "Foo"]);
+}
+
+// Test iteration.
+
+unittest
+{
+	auto stack = Stack!(string)(16);
+
+	stack.push("Foo");
+	stack.push("Bar");
+	stack.push("Baz");
+	stack.push("Qux");
+
+	size_t counter;
+	auto data  = ["Qux", "Baz", "Bar", "Foo"];
+
+	foreach (value; stack.byValue)
+	{
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (value; stack.byValue.save)
+	{
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (value; stack)
+	{
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
+	foreach (index, value; stack)
+	{
+		assert(index == counter);
+		assert(value == data[counter++]);
+	}
+
+	assert(stack.pop() == "Qux");
+	assert(stack.pop() == "Baz");
+	assert(stack.pop() == "Bar");
+	assert(stack.pop() == "Foo");
 }
 

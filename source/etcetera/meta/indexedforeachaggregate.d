@@ -19,7 +19,7 @@ module etcetera.meta.indexedforeachaggregate;
  */
 public template IndexedForeachAggregate(T)
 {
-	alias IndexedForeachAggregate = int delegate(ref size_t, ref T) nothrow;
+	alias IndexedForeachAggregate = int delegate(ref size_t, ref T) nothrow @nogc;
 }
 
 ///
