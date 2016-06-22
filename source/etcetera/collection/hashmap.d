@@ -200,7 +200,7 @@ class HashMap(K, V)
 	 *
 	 * Throws:
 	 *     $(PARAM_TABLE
-	 *         $(PARAM_ROW AssertError, If the minimum allocated size is not big enough for at least one bucket.)
+	 *         $(PARAM_ROW AssertError, If the minimum allocated size is below the minimum bucket size.)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory allocation fails.)
 	 *     )
 	 */
@@ -223,6 +223,9 @@ class HashMap(K, V)
 				{
 					this.put(payload.key, payload.value);
 				}
+
+				// TODO fix the linked list. This should not be neccessary!!!
+				(*bucket).clear();
 			}
 		}
 
@@ -420,9 +423,71 @@ unittest
 
 unittest
 {
+	import std.algorithm;
+	import std.conv;
+	import std.stdio;
+
+	auto hashMap = new HashMap!(string, int);
+
+	assert(hashMap.empty);
+	assert(hashMap.count == 0);
+
+	int limit = 200_000;
+
+	for (int x = 1; x <= limit ; x++)
+	{
+		hashMap.put(x.to!(string), x);
+		assert(hashMap.get(x.to!(string)) == x);
+		assert(hashMap.count == x);
+	}
+
+	assert(hashMap.get(limit.to!(string)) == limit);
+	assert(hashMap.count == limit);
+	assert(hashMap.hasValue(1));
+	assert(hashMap.hasValue(limit));
+	assert(hashMap.hasKey("1"));
+	assert(hashMap.hasKey(limit.to!(string)));
+
+	// assert(hashMap.byValue.canFind(1));
+	// assert(hashMap.byValue.canFind(limit));
+	// assert(hashMap.byValue.length == limit);
+	assert(!hashMap.empty);
+
+	for (int x = limit; x >= 1 ; x--)
+	{
+		assert(hashMap.count == x);
+		assert(hashMap.get(x.to!(string)) == x);
+		hashMap.remove(x.to!(string));
+	}
+
+	// assert(hashMap.empty);
+
+	// for (int x = 1; x <= limit ; x++)
+	// {
+	// 	hashMap.put(x.to!(string), x);
+	// 	assert(hashMap.get(x.to!(string)) == x);
+	// 	assert(hashMap.count == x);
+	// }
+
+	// hashMap.clear();
+
+	// assert(hashMap.empty);
+	// assert(hashMap.count == 0);
+	// assert(!hashMap.hasValue(1));
+	// assert(!hashMap.hasValue(limit));
+	// assert(!hashMap.hasKey("1"));
+	// assert(!hashMap.hasKey(limit.to!(string)));
+	// assert(hashMap.byValue.length == 0);
+}
+
+unittest
+{
 	auto hashMap = new HashMap!(string, string)(1);
+	assert(hashMap._bucketNumber == 1);
 
 	hashMap.put("foo", "Lorem ipsum");
+	assert(hashMap._bucketNumber == 2);
+
 	hashMap.put("bar", "Dolor sit amet");
 	hashMap.put("baz", "Consectetur adipiscing elit");
 

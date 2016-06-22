@@ -440,22 +440,22 @@ struct Stack(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(scope ForeachAggregate!(T) dg)
-	{
-		int result;
+	// final public int opApply(scope ForeachAggregate!(T) dg)
+	// {
+	// 	int result;
 
-		for (T* pointer = this._pointer; pointer >= this._data; pointer--)
-		{
-			result = dg(*pointer);
+	// 	for (T* pointer = this._pointer; pointer >= this._data; pointer--)
+	// 	{
+	// 		result = dg(*pointer);
 
-			if (result)
-			{
-				break;
-			}
-		}
+	// 		if (result)
+	// 		{
+	// 			break;
+	// 		}
+	// 	}
 
-		return result;
-	}
+	// 	return result;
+	// }
 
 	/**
 	 * Enable forward iteration in foreach loops using an index.
@@ -485,23 +485,23 @@ struct Stack(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(scope IndexedForeachAggregate!(T) dg)
-	{
-		int result;
-		size_t index;
+	// final public int opApply(scope IndexedForeachAggregate!(T) dg)
+	// {
+	// 	int result;
+	// 	size_t index;
 
-		for (T* pointer = this._pointer; pointer >= this._data; index++, pointer--)
-		{
-			result = dg(index, *pointer);
+	// 	for (T* pointer = this._pointer; pointer >= this._data; index++, pointer--)
+	// 	{
+	// 		result = dg(index, *pointer);
 
-			if (result)
-			{
-				break;
-			}
-		}
+	// 		if (result)
+	// 		{
+	// 			break;
+	// 		}
+	// 	}
 
-		return result;
-	}
+	// 	return result;
+	// }
 }
 
 ///
@@ -774,18 +774,18 @@ unittest
 		assert(value == data[counter++]);
 	}
 
-	counter = 0;
-	foreach (value; stack)
-	{
-		assert(value == data[counter++]);
-	}
+	// counter = 0;
+	// foreach (value; stack)
+	// {
+	// 	assert(value == data[counter++]);
+	// }
 
-	counter = 0;
-	foreach (index, value; stack)
-	{
-		assert(index == counter);
-		assert(value == data[counter++]);
-	}
+	// counter = 0;
+	// foreach (index, value; stack)
+	// {
+	// 	assert(index == counter);
+	// 	assert(value == data[counter++]);
+	// }
 
 	assert(stack.pop() == "Qux");
 	assert(stack.pop() == "Baz");
