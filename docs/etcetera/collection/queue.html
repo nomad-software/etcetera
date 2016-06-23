@@ -14,7 +14,7 @@
 </p>
 <h3>License</h3><p>MIT. See LICENSE for full details.</p>
 </div>
-<div class="module-members"><h2><a name="Queue"></a>class <span class="symbol">Queue</span>(T);
+<div class="module-members"><h2><a name="Queue"></a>struct <span class="symbol">Queue</span>(T);
 </h2>
 <div class="declaration-description"><div class="sections"><p>A generic first-in-first-out (FIFO) queue implementation.
 </p>
@@ -25,7 +25,7 @@
 <span class="keyword">import</span> std.algorithm;
 <span class="keyword">import</span> std.string;
 
-<span class="keyword">auto</span> queue = <span class="keyword">new</span> <span class="symbol">Queue</span>!(string);
+<span class="keyword">auto</span> queue = <span class="symbol">Queue</span>!(string)(8);
 
 queue.enqueue(<span class="string">"Foo"</span>);
 queue.enqueue(<span class="string">"Bar"</span>);
@@ -47,7 +47,7 @@ queue.clear();
 <span class="keyword">assert</span>(queue.count == 0);
 </pre>
 </p></div>
-<div class="class-members"><h2><a name="Queue.this"></a>final nothrow this(size_t minCapacity = 8192);
+<div class="struct-members"><h2><a name="Queue.this"></a>this(size_t minCapacity);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Construct a new queue.
 </p>
@@ -67,21 +67,21 @@ queue.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="Queue.count"></a>final const pure nothrow @property size_t <span class="symbol">count</span>();
+<h2><a name="Queue.count"></a>const pure @property size_t <span class="symbol">count</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Get the number of items stored in the queue.
 </p>
 <h3>Return Value</h3><p>The number of items stored in the queue.</p>
 </div>
 </div>
-<h2><a name="Queue.empty"></a>final const pure nothrow @property bool <span class="symbol">empty</span>();
+<h2><a name="Queue.empty"></a>const pure @property bool <span class="symbol">empty</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Test if the queue is <span class="symbol">empty</span> or not.
 </p>
 <h3>Return Value</h3><p><strong>true</strong> if the queue is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
 </div>
 </div>
-<h2><a name="Queue.enqueue"></a>final nothrow void <span class="symbol">enqueue</span>(T item);
+<h2><a name="Queue.enqueue"></a>void <span class="symbol">enqueue</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Add an item to the queue.
 </p>
@@ -96,7 +96,7 @@ queue.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="Queue.peek"></a>final pure nothrow T <span class="symbol">peek</span>();
+<h2><a name="Queue.peek"></a>pure T <span class="symbol">peek</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Return the front item in the queue but don't remove it.
 </p>
@@ -107,7 +107,7 @@ queue.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="Queue.dequeue"></a>final nothrow T <span class="symbol">dequeue</span>();
+<h2><a name="Queue.dequeue"></a>T <span class="symbol">dequeue</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Remove and return the front item in the queue.
 </p>
@@ -123,7 +123,7 @@ queue.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="Queue.contains"></a>final bool <span class="symbol">contains</span>(T item);
+<h2><a name="Queue.contains"></a>bool <span class="symbol">contains</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Check if a value is contained in the queue.
 </p>
@@ -137,7 +137,7 @@ queue.clear();
 <h3>Return Value</h3><p><strong>true</strong> if the item is found on the queue, <strong>false</strong> if not.</p>
 </div>
 </div>
-<h2><a name="Queue.clear"></a>final nothrow void <span class="symbol">clear</span>();
+<h2><a name="Queue.clear"></a>void <span class="symbol">clear</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Clears the queue.
 </p>
@@ -149,7 +149,7 @@ queue.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="Queue.byValue"></a>final pure nothrow auto <span class="symbol">byValue</span>();
+<h2><a name="Queue.byValue"></a>pure auto <span class="symbol">byValue</span>();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Return a forward range to allow this queue to be used with various
  other algorithms.
@@ -161,7 +161,7 @@ queue.clear();
 <pre><span class="keyword">import</span> std.algorithm;
 <span class="keyword">import</span> std.string;
 
-<span class="keyword">auto</span> queue = <span class="keyword">new</span> Queue!(string);
+<span class="keyword">auto</span> queue = Queue!(string)(16);
 
 queue.enqueue(<span class="string">"Foo"</span>);
 queue.enqueue(<span class="string">"Bar"</span>);
@@ -173,11 +173,11 @@ queue.enqueue(<span class="string">"Baz"</span>);
 </p>
 </div>
 </div>
-<h2><a name="Queue.opApply"></a>final nothrow int <span class="symbol">opApply</span>(ForeachAggregate!T dg);
+<h2><a name="Queue.opApply"></a>final int <span class="symbol">opApply</span>(scope int delegate(ref T) nothrow @nogc dg);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Enable forward iteration in foreach loops.
 </p>
-<h3>Parameters</h3><table class="parameter-list"><tr><td>ForeachAggregate!T dg</td>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>int delegate(ref T) nothrow @nogc dg</td>
 <td>A delegate that replaces the foreach loop.</td></tr>
 </table>
 <h3>Return Value</h3><p>A return value to determine if the loop should continue.
@@ -189,7 +189,7 @@ queue.enqueue(<span class="string">"Baz"</span>);
 <p><h3>Example:</h3>
 <pre><span class="keyword">import</span> std.stdio;
 
-<span class="keyword">auto</span> queue = <span class="keyword">new</span> Queue!(string);
+<span class="keyword">auto</span> queue = Queue!(string)(16);
 
 queue.enqueue(<span class="string">"Foo"</span>);
 queue.enqueue(<span class="string">"Bar"</span>);
@@ -203,11 +203,11 @@ queue.enqueue(<span class="string">"Baz"</span>);
 </p>
 </div>
 </div>
-<h2><a name="Queue.opApply.2"></a>final nothrow int <span class="symbol">opApply</span>(IndexedForeachAggregate!T dg);
+<h2><a name="Queue.opApply.2"></a>final int <span class="symbol">opApply</span>(scope int delegate(ref size_t, ref T) nothrow @nogc dg);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Enable forward iteration in foreach loops using an index.
 </p>
-<h3>Parameters</h3><table class="parameter-list"><tr><td>IndexedForeachAggregate!T dg</td>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>int delegate(ref size_t, ref T) nothrow @nogc dg</td>
 <td>A delegate that replaces the foreach loop.</td></tr>
 </table>
 <h3>Return Value</h3><p>A return value to determine if the loop should continue.
@@ -219,7 +219,7 @@ queue.enqueue(<span class="string">"Baz"</span>);
 <p><h3>Example:</h3>
 <pre><span class="keyword">import</span> std.stdio;
 
-<span class="keyword">auto</span> queue = <span class="keyword">new</span> Queue!(string);
+<span class="keyword">auto</span> queue = Queue!(string)(16);
 
 queue.enqueue(<span class="string">"Foo"</span>);
 queue.enqueue(<span class="string">"Bar"</span>);

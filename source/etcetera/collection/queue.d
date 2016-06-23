@@ -9,9 +9,10 @@ module etcetera.collection.queue;
 /**
  * Imports.
  */
+import core.exception;
 import core.memory;
+import core.stdc.stdlib : malloc, calloc, realloc, free;
 import core.stdc.string : memcpy, memmove, memset;
-import etcetera.meta;
 import std.range;
 import std.traits;
 
@@ -21,8 +22,16 @@ import std.traits;
  * Params:
  *     T = The type stored in the queue.
  */
-class Queue(T)
+struct Queue(T)
 {
+	@nogc:
+	nothrow:
+
+	/**
+	 * The reference count.
+	 */
+	private int* _refCount;
+
 	/**
 	 * A pointer to the queue data.
 	 */
@@ -51,7 +60,7 @@ class Queue(T)
 	/**
 	 * The minimum size in bytes that the queue will allocate.
 	 */
-	private immutable size_t _minSize;
+	private size_t _minSize;
 
 	/**
 	 * The current size in bytes of the queue.
@@ -62,6 +71,11 @@ class Queue(T)
 	 * The number of items currently held in the queue.
 	 */
 	private size_t _count;
+
+	/*
+	 * Disable the default constructor.
+	 */
+	@disable this();
 
 	/**
 	 * Construct a new queue.
@@ -82,24 +96,53 @@ class Queue(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory allocation fails.)
 	 *     )
 	 */
-	final public this(size_t minCapacity = 8_192) nothrow
+	public this(size_t minCapacity)
 	{
 		assert(minCapacity >= 1, "Queue must allow for at least one item.");
 
+		this._refCount  = cast(int*) malloc(int.sizeof);
+		*this._refCount = 1;
+
 		this._minSize = minCapacity * T.sizeof;
 		this._size    = this._minSize;
+		this._data    = cast(T*) calloc(minCapacity, T.sizeof);
+
+		if (this._data is null)
+		{
+			onOutOfMemoryError();
+		}
 
 		static if (hasIndirections!(T))
 		{
-			this._data = cast(T*)GC.calloc(this._size, GC.BlkAttr.NO_MOVE, typeid(T));
-		}
-		else
-		{
-			this._data = cast(T*)GC.calloc(this._size, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(T));
+			GC.addRange(this._data, this._size, typeid(T));
 		}
 
 		this._front = this._data;
 		this._back  = this._data - 1;
+	}
+
+	/**
+	 * Copy constructor post blit.
+	 */
+	public this(this) pure
+	{
+		*this._refCount += 1;
+	}
+
+	/**
+	 * Destructor.
+	 */
+	public ~this()
+	{
+		*this._refCount -= 1;
+
+		if (*this._refCount <= 0)
+		{
+			GC.removeRange(this._data);
+
+			free(this._refCount);
+			free(this._data);
+		}
 	}
 
 	/**
@@ -108,7 +151,7 @@ class Queue(T)
 	 * Returns:
 	 *     The number of items stored in the queue.
 	 */
-	final public @property size_t count() const nothrow pure
+	public @property size_t count() const pure
 	{
 		return this._count;
 	}
@@ -119,7 +162,7 @@ class Queue(T)
 	 * Returns:
 	 *     true if the queue is empty, false if not.
 	 */
-	final public @property bool empty() const nothrow pure
+	public @property bool empty() const pure
 	{
 		return (this._count == 0);
 	}
@@ -131,7 +174,7 @@ class Queue(T)
 	 * Returns:
 	 *     The capacity of how many items the queue can hold.
 	 */
-	final private @property size_t capacity() const nothrow pure
+	private @property size_t capacity() const pure
 	{
 		return this._size / T.sizeof;
 	}
@@ -150,14 +193,26 @@ class Queue(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
-	final public void enqueue(T item) nothrow
+	public void enqueue(T item)
 	{
 		if (this._count == this.capacity)
 		{
+			GC.removeRange(this._data);
+
 			this._frontOffset = this._front - this._data;
 
 			this._size *= 2;
-			this._data  = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
+			this._data  = cast(T*) realloc(this._data, this._size);
+
+			if (this._data is null)
+			{
+				onOutOfMemoryError();
+			}
+
+			static if (hasIndirections!(T))
+			{
+				GC.addRange(this._data, this._size, typeid(T));
+			}
 
 			if (this._frontOffset > 0)
 			{
@@ -194,7 +249,7 @@ class Queue(T)
 	 *         $(PARAM_ROW AssertError, If the queue is empty.)
 	 *     )
 	 */
-	final public T peek() nothrow pure
+	public T peek() pure
 	{
 		assert(this._count, "Queue empty, peeking failed.");
 
@@ -216,14 +271,12 @@ class Queue(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
-	final public T dequeue() nothrow
+	public T dequeue()
 	{
 		assert(this._count, "Queue empty, dequeuing failed.");
 
-		static T dequeued;
-
 		this._count--;
-		dequeued = *(this._front);
+		auto dequeued = *(this._front);
 
 		memset(this._front, 0, T.sizeof);
 
@@ -249,8 +302,20 @@ class Queue(T)
 				memmove(this._data, this._front, (this._count + 1) * T.sizeof);
 			}
 
+			GC.removeRange(this._data);
+
 			this._size /= 2;
-			this._data  = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
+			this._data  = cast(T*) realloc(this._data, this._size);
+
+			if (this._data is null)
+			{
+				onOutOfMemoryError();
+			}
+
+			static if (hasIndirections!(T))
+			{
+				GC.addRange(this._data, this._size, typeid(T));
+			}
 
 			this._front = this._data;
 			this._back  = this._data + (this.capacity - 1);
@@ -271,30 +336,35 @@ class Queue(T)
 	 * Returns:
 	 *     true if the item is found on the queue, false if not.
 	 */
-	final public bool contains(T item)
+	public bool contains(T item)
 	{
 		if (!this.empty)
 		{
-			if (this._front > this._back)
+			for (T* x = this._data; x < this._data + this.capacity ; x++)
 			{
-				for (T* x = this._data; x <= this._back; x++)
+				if (this._front > this._back && x > this._back && x < this._front)
 				{
-					if (*x == item)
+					continue;
+				}
+				else if (this._front <= this._back && x < this._front)
+				{
+					continue;
+				}
+				else if (this._front <= this._back && x > this._back)
+				{
+					break;
+				}
+
+				// For the time being we have to handle classes and interfaces as a
+				// special case when comparing because Object.opEquals is not @nogc.
+				static if (is(T == class) || is(T == interface))
+				{
+					if (*x is item)
 					{
 						return true;
 					}
 				}
-				for (T* x = this._front; x < this._data + this.capacity; x++)
-				{
-					if (*x == item)
-					{
-						return true;
-					}
-				}
-			}
-			else
-			{
-				for (T* x = this._front; x <= this._back; x++)
+				else
 				{
 					if (*x == item)
 					{
@@ -303,6 +373,7 @@ class Queue(T)
 				}
 			}
 		}
+
 		return false;
 	}
 
@@ -317,12 +388,24 @@ class Queue(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory reallocation fails.)
 	 *     )
 	 */
-	final public void clear() nothrow
+	public void clear()
 	{
 		if (this._size > this._minSize)
 		{
+			GC.removeRange(this._data);
+
 			this._size = this._minSize;
-			this._data = cast(T*)GC.realloc(this._data, this._size, GC.BlkAttr.NONE, typeid(T));
+			this._data = cast(T*) realloc(this._data, this._size);
+
+			if (this._data is null)
+			{
+				onOutOfMemoryError();
+			}
+
+			static if (hasIndirections!(T))
+			{
+				GC.addRange(this._data, this._size, typeid(T));
+			}
 		}
 
 		memset(this._data, 0, this._size);
@@ -344,7 +427,7 @@ class Queue(T)
 	 * import std.algorithm;
 	 * import std.string;
 	 *
-	 * auto queue = new Queue!(string);
+	 * auto queue = Queue!(string)(16);
 	 *
 	 * queue.enqueue("Foo");
 	 * queue.enqueue("Bar");
@@ -354,7 +437,7 @@ class Queue(T)
 	 * assert(queue.byValue.map!(toLower).array == ["foo", "bar", "baz"]);
 	 * ---
 	 */
-	final public auto byValue() nothrow pure
+	public auto byValue() pure
 	{
 		static struct Result
 		{
@@ -417,7 +500,7 @@ class Queue(T)
 	 * ---
 	 * import std.stdio;
 	 *
-	 * auto queue = new Queue!(string);
+	 * auto queue = Queue!(string)(16);
 	 *
 	 * queue.enqueue("Foo");
 	 * queue.enqueue("Bar");
@@ -429,7 +512,7 @@ class Queue(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(ForeachAggregate!(T) dg) nothrow
+	final public int opApply(scope int delegate(ref T) nothrow @nogc dg)
 	{
 		int result   = 0;
 		T* front     = this._front;
@@ -447,7 +530,7 @@ class Queue(T)
 			front++;
 			count--;
 
-			if (front == (this._data + (this._size / T.sizeof)))
+			if (front == (this._data + this.capacity))
 			{
 				front = this._data;
 			}
@@ -472,7 +555,7 @@ class Queue(T)
 	 * ---
 	 * import std.stdio;
 	 *
-	 * auto queue = new Queue!(string);
+	 * auto queue = Queue!(string)(16);
 	 *
 	 * queue.enqueue("Foo");
 	 * queue.enqueue("Bar");
@@ -484,7 +567,7 @@ class Queue(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(IndexedForeachAggregate!(T) dg) nothrow
+	final public int opApply(scope int delegate(ref size_t, ref T) nothrow @nogc dg)
 	{
 		int result   = 0;
 		T* front     = this._front;
@@ -504,7 +587,7 @@ class Queue(T)
 			count--;
 			index++;
 
-			if (front == (this._data + (this._size / T.sizeof)))
+			if (front == (this._data + this.capacity))
 			{
 				front = this._data;
 			}
@@ -520,7 +603,7 @@ unittest
 	import std.algorithm;
 	import std.string;
 
-	auto queue = new Queue!(string);
+	auto queue = Queue!(string)(8);
 
 	queue.enqueue("Foo");
 	queue.enqueue("Bar");
@@ -543,11 +626,55 @@ unittest
 
 }
 
+// Test reference counting.
+
+unittest
+{
+	auto foo(T)(T queue)
+	{
+		assert(*queue._refCount == 2);
+	}
+
+	auto bar(T)(ref T queue)
+	{
+		assert(*queue._refCount == 1);
+	}
+
+	auto baz(T)(T queue)
+	{
+		assert(*queue._refCount == 1);
+		return queue;
+	}
+
+	auto qux()
+	{
+		return Queue!(string)(1);
+	}
+
+	auto queue = Queue!(string)(16);
+
+	assert(*queue._refCount == 1);
+
+	foo(queue);
+	assert(*queue._refCount == 1);
+
+	bar(queue);
+	assert(*queue._refCount == 1);
+
+	queue = baz(Queue!(string)(1));
+	assert(*queue._refCount == 1);
+
+	queue = qux();
+	assert(*queue._refCount == 1);
+}
+
+// Test big datasets.
+
 unittest
 {
 	import std.algorithm;
 
-	auto queue = new Queue!(int);
+	auto queue = Queue!(int)(8_192);
 
 	assert(queue.empty);
 	assert(queue.count == 0);
@@ -601,274 +728,52 @@ unittest
 	assert(queue.capacity == 8_192);
 }
 
-unittest
-{
-	auto queue = new Queue!(byte)(1);
-
-	queue.enqueue(1);
-	assert(queue._data[0 .. 1] == [1]);
-	assert(queue.contains(1));
-
-	queue.enqueue(2);
-	assert(queue._data[0 .. 2] == [1, 2]);
-	assert(queue.contains(2));
-
-	queue.enqueue(3);
-	assert(queue._data[0 .. 3] == [1, 2, 3]);
-	assert(queue.contains(3));
-
-	queue.enqueue(4);
-	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
-	assert(queue.contains(4));
-
-	assert(queue.dequeue() == 1);
-	assert(queue._data[0 .. 4] == [0, 2, 3, 4]);
-	assert(!queue.contains(1));
-
-	assert(queue.dequeue() == 2);
-	assert(!queue.contains(2));
-	assert(queue._data[0 .. 2] == [3, 4]);
-
-	assert(queue.dequeue() == 3);
-	assert(!queue.contains(3));
-	assert(queue._data[0 .. 1] == [4]);
-
-	assert(queue.dequeue() == 4);
-	assert(!queue.contains(4));
-	assert(queue.empty);
-}
+// Test the memory layout.
 
 unittest
 {
-	auto queue = new Queue!(short)(1);
+	auto queue = Queue!(byte)(1);
 
 	queue.enqueue(1);
-	assert(queue.contains(1));
-	assert(queue._data[0 .. 1] == [1]);
+	assert(queue._data[0 .. queue._size] == [1]);
 
 	queue.enqueue(2);
-	assert(queue.contains(2));
-	assert(queue._data[0 .. 2] == [1, 2]);
+	assert(queue._data[0 .. queue._size] == [1, 2]);
 
 	queue.enqueue(3);
-	assert(queue.contains(3));
-	assert(queue._data[0 .. 3] == [1, 2, 3]);
+	assert(queue._data[0 .. queue._size] == [1, 2, 3, 0]);
 
 	queue.enqueue(4);
+	assert(queue._data[0 .. queue._size] == [1, 2, 3, 4]);
 	assert(queue.contains(4));
-	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
 
 	assert(queue.dequeue() == 1);
+	assert(queue._data[0 .. queue._size] == [0, 2, 3, 4]);
 	assert(!queue.contains(1));
-	assert(queue._data[0 .. 4] == [0, 2, 3, 4]);
 
 	queue.enqueue(5);
-	// Make sure the new back and front can still be searched.
+	assert(queue._data[0 .. queue._size] == [5, 2, 3, 4]);
 	assert(queue.contains(4));
 	assert(queue.contains(5));
-	assert(queue._data[0 .. 4] == [5, 2, 3, 4]);
 
 	assert(queue.dequeue() == 2);
+	assert(queue._data[0 .. queue._size] == [5, 0, 3, 4]);
 	assert(!queue.contains(2));
-	assert(queue._data[0 .. 4] == [5, 0, 3, 4]);
 
 	assert(queue.dequeue() == 3);
-	assert(!queue.contains(3));
-	assert(queue._data[0 .. 2] == [4, 5]);
-
-	assert(queue.dequeue() == 4);
-	assert(!queue.contains(4));
-	assert(queue._data[0 .. 1] == [5]);
-
-	assert(queue.dequeue() == 5);
-	assert(!queue.contains(5));
-	assert(queue.empty);
-}
-
-unittest
-{
-	auto queue = new Queue!(int)(1);
-
-	queue.enqueue(1);
-	assert(queue.contains(1));
-	assert(queue._data[0 .. 1] == [1]);
-
-	queue.enqueue(2);
-	assert(queue.contains(2));
-	assert(queue._data[0 .. 2] == [1, 2]);
-
-	queue.enqueue(3);
-	assert(queue.contains(3));
-	assert(queue._data[0 .. 3] == [1, 2, 3]);
-
-	queue.enqueue(4);
-	assert(queue.contains(4));
-	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
-
-	assert(queue.dequeue() == 1);
-	assert(!queue.contains(1));
-	assert(queue._data[0 .. 4] == [0, 2, 3, 4]);
-
-	queue.enqueue(5);
-	assert(queue.contains(5));
-	assert(queue._data[0 .. 4] == [5, 2, 3, 4]);
-
-	assert(queue.dequeue() == 2);
+	assert(queue._data[0 .. queue._size] == [4, 5]);
 	assert(!queue.contains(2));
-	assert(queue._data[0 .. 4] == [5, 0, 3, 4]);
 
 	queue.enqueue(6);
-	assert(queue.contains(6));
-	assert(queue._data[0 .. 4] == [5, 6, 3, 4]);
-
-	assert(queue.dequeue() == 3);
-	assert(!queue.contains(3));
-	assert(queue._data[0 .. 4] == [5, 6, 0, 4]);
-
-	assert(queue.dequeue() == 4);
-	assert(!queue.contains(4));
-	assert(queue._data[0 .. 2] == [5, 6]);
-
-	assert(queue.dequeue() == 5);
-	assert(!queue.contains(5));
-	assert(queue._data[0 .. 1] == [6]);
-
-	assert(queue.dequeue() == 6);
-	assert(!queue.contains(6));
-	assert(queue.empty);
-}
-
-unittest
-{
-	auto queue = new Queue!(long)(1);
-
-	queue.enqueue(1);
-	assert(queue.contains(1));
-	assert(queue._data[0 .. 1] == [1]);
-
-	queue.enqueue(2);
-	assert(queue.contains(2));
-	assert(queue._data[0 .. 2] == [1, 2]);
-
-	queue.enqueue(3);
-	assert(queue.contains(3));
-	assert(queue._data[0 .. 3] == [1, 2, 3]);
-
-	queue.enqueue(4);
-	assert(queue.contains(3));
-	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
-
-	assert(queue.dequeue() == 1);
-	assert(!queue.contains(1));
-	assert(queue._data[0 .. 4] == [0, 2, 3, 4]);
-
-	queue.enqueue(5);
-	assert(queue.contains(5));
-	assert(queue._data[0 .. 4] == [5, 2, 3, 4]);
-
-	assert(queue.dequeue() == 2);
-	assert(!queue.contains(2));
-	assert(queue._data[0 .. 4] == [5, 0, 3, 4]);
-
-	queue.enqueue(6);
-	assert(queue.contains(6));
-	assert(queue._data[0 .. 4] == [5, 6, 3, 4]);
-
-	assert(queue.dequeue() == 3);
-	assert(!queue.contains(3));
-	assert(queue._data[0 .. 4] == [5, 6, 0, 4]);
-
 	queue.enqueue(7);
-	assert(queue.contains(7));
-	assert(queue._data[0 .. 4] == [5, 6, 7, 4]);
-
 	assert(queue.dequeue() == 4);
-	assert(!queue.contains(4));
-	assert(queue._data[0 .. 4] == [5, 6, 7, 0]);
-
-	assert(queue.dequeue() == 5);
-	assert(!queue.contains(5));
-	assert(queue._data[0 .. 2] == [6, 7]);
-
-	assert(queue.dequeue() == 6);
-	assert(!queue.contains(6));
-	assert(queue._data[0 .. 1] == [7]);
-
-	assert(queue.dequeue() == 7);
-	assert(!queue.contains(7));
-	assert(queue.empty);
-}
-
-unittest
-{
-	auto queue = new Queue!(long)(1);
-
-	queue.enqueue(1);
-	assert(queue.contains(1));
-	assert(queue._data[0 .. 1] == [1]);
-
-	queue.enqueue(2);
-	assert(queue.contains(2));
-	assert(queue._data[0 .. 2] == [1, 2]);
-
-	queue.enqueue(3);
-	assert(queue.contains(3));
-	assert(queue._data[0 .. 3] == [1, 2, 3]);
-
-	queue.enqueue(4);
-	assert(queue.contains(3));
-	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
-
-	assert(queue.dequeue() == 1);
-	assert(!queue.contains(1));
-	assert(queue._data[0 .. 4] == [0, 2, 3, 4]);
-
-	queue.enqueue(5);
-	assert(queue.contains(5));
-	assert(queue._data[0 .. 4] == [5, 2, 3, 4]);
-
-	queue.enqueue(6);
-	assert(queue.contains(6));
-	assert(queue._data[0 .. 5] == [2, 3, 4, 5, 6]);
-
-	queue.enqueue(7);
-	assert(queue.contains(7));
-	assert(queue._data[0 .. 6] == [2, 3, 4, 5, 6, 7]);
-
 	queue.enqueue(8);
-	assert(queue.contains(8));
-	assert(queue._data[0 .. 7] == [2, 3, 4, 5, 6, 7, 8]);
+	assert(queue._data[0 .. queue._size] == [8, 5, 6, 7]);
+	queue.enqueue(9);
+	assert(queue._data[0 .. queue._size] == [5, 6, 7, 8, 9, 0, 0, 0]);
 }
 
-unittest
-{
-	auto queue = new Queue!(byte)(4);
-
-	assert(queue.capacity == 4);
-	assert(queue._data[0 .. 4] == [0, 0, 0, 0]);
-
-	queue.enqueue(1);
-	queue.enqueue(2);
-	queue.enqueue(3);
-	queue.enqueue(4);
-	assert(queue._data[0 .. 4] == [1, 2, 3, 4]);
-
-	queue.enqueue(5);
-	assert(queue.capacity == 8);
-	assert(queue._data[0 .. 8] == [1, 2, 3, 4, 5, 0, 0, 0]);
-
-	assert(queue.dequeue() == 1);
-	assert(queue.capacity == 4);
-	assert(queue._data[0 .. 4] == [2, 3, 4, 5]);
-
-	assert(queue.dequeue() == 2);
-	assert(queue.dequeue() == 3);
-	assert(queue.capacity == 4);
-	assert(queue._data[0 .. 4] == [0, 0, 4, 5]);
-
-	queue.clear();
-	assert(queue._data[0 .. 4] == [0, 0, 0, 0]);
-}
+// Test storing objects.
 
 unittest
 {
@@ -876,29 +781,71 @@ unittest
 	{
 		private int _foo;
 
-		public this(int foo) nothrow
+		public this(int foo)
 		{
 			this._foo = foo;
 		}
 	}
 
-	auto queue = new Queue!(Foo)(4);
+	auto queue = Queue!(Foo)(1);
+	auto foo   = new Foo(1);
 
-	queue.enqueue(new Foo(1));
+	queue.enqueue(foo);
 	queue.enqueue(new Foo(2));
 	queue.enqueue(new Foo(3));
 
+	assert(queue.contains(foo));
+	assert(!queue.contains(new Foo(1)));
 	assert(queue.dequeue()._foo == 1);
-	assert(queue.dequeue()._foo == 2);
-	assert(queue.dequeue()._foo == 3);
+
+	queue.clear();
+	assert(queue.empty);
 }
+
+// Test storing interfaces.
+
+unittest
+{
+	interface Foo
+	{
+		public void foo();
+	}
+
+	auto foo = Queue!(Foo)(16);
+}
+
+// Test storing structs.
+
+unittest
+{
+	struct Foo
+	{
+		private int _foo;
+
+		public this(int foo)
+		{
+			this._foo = foo;
+		}
+	}
+
+	auto queue = Queue!(Foo)(16);
+	auto foo   = Foo(1);
+
+	queue.enqueue(foo);
+
+	assert(queue.contains(foo));
+	assert(!queue.contains(Foo(2)));
+	assert(queue.dequeue()._foo == 1);
+}
+
+// Test the range interface.
 
 unittest
 {
 	import std.algorithm;
 	import std.string;
 
-	auto queue = new Queue!(string);
+	auto queue = Queue!(string)(16);
 
 	queue.enqueue("Foo");
 	queue.enqueue("Bar");
@@ -907,30 +854,38 @@ unittest
 	assert(queue.byValue.canFind("Baz"));
 	assert(queue.byValue.map!(toLower).array == ["foo", "bar", "baz"]);
 	assert(queue.byValue.save.array == ["Foo", "Bar", "Baz"]);
+
+	auto bytes = Queue!(byte)(1);
+	bytes.enqueue(1);
+	bytes.enqueue(2);
+	bytes.enqueue(3);
+	bytes.enqueue(4);
+	bytes.dequeue();
+	bytes.enqueue(5);
+
+	assert(bytes._data[0 .. bytes._size] == [5, 2, 3, 4]);
+	assert(bytes.byValue.save.array == [2, 3, 4, 5]);
 }
+
+// Test iteration.
 
 unittest
 {
-	auto queue = new Queue!(string);
+	auto queue  = Queue!(byte)(1);
+	byte[] data = [1, 2, 3, 4];
 
-	queue.enqueue("Foo");
-	queue.enqueue("Bar");
-	queue.enqueue("Baz");
-	queue.enqueue("Qux");
+	int counter;
 
-	size_t counter;
-	auto data  = ["Foo", "Bar", "Baz", "Qux"];
+	queue.enqueue(1);
+	queue.enqueue(2);
+	queue.enqueue(3);
+	queue.enqueue(4);
+	queue.dequeue();
+	queue.enqueue(5);
 
-	foreach (value; queue.byValue)
-	{
-		assert(value == data[counter++]);
-	}
+	assert(queue._data[0 .. queue._size] == [5, 2, 3, 4]);
 
-	counter = 0;
-	foreach (value; queue.byValue.save)
-	{
-		assert(value == data[counter++]);
-	}
+	data = [2, 3, 4, 5];
 
 	counter = 0;
 	foreach (value; queue)
@@ -944,10 +899,5 @@ unittest
 		assert(index == counter);
 		assert(value == data[counter++]);
 	}
-
-	assert(queue.dequeue() == "Foo");
-	assert(queue.dequeue() == "Bar");
-	assert(queue.dequeue() == "Baz");
-	assert(queue.dequeue() == "Qux");
 }
 
