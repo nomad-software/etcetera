@@ -13,7 +13,6 @@ import core.exception;
 import core.memory;
 import core.stdc.stdlib : malloc, calloc, realloc, free;
 import core.stdc.string : memset;
-import etcetera.meta;
 import std.range;
 import std.traits;
 
@@ -291,25 +290,29 @@ struct Stack(T)
 	 */
 	public bool contains(T item) pure
 	{
-		for (T* x = this._data; x < this._data + this._count ; x++)
+		if (!this.empty)
 		{
-			// For the time being we have to handle classes and interfaces as a
-			// special case when comparing because Object.opEquals is not @nogc.
-			static if (is(T == class) || is(T == interface))
+			for (T* x = this._data; x < this._data + this._count ; x++)
 			{
-				if (*x is item)
+				// For the time being we have to handle classes and interfaces as a
+				// special case when comparing because Object.opEquals is not @nogc.
+				static if (is(T == class) || is(T == interface))
 				{
-					return true;
+					if (*x is item)
+					{
+						return true;
+					}
 				}
-			}
-			else
-			{
-				if (*x == item)
+				else
 				{
-					return true;
+					if (*x == item)
+					{
+						return true;
+					}
 				}
 			}
 		}
+
 		return false;
 	}
 
@@ -362,7 +365,7 @@ struct Stack(T)
 	 * import std.algorithm;
 	 * import std.string;
 	 *
-	 * auto stack = stack!(string);
+	 * auto stack = Stack!(string)(16);
 	 *
 	 * stack.push("Foo");
 	 * stack.push("Bar");
@@ -440,22 +443,22 @@ struct Stack(T)
 	 * }
 	 * ---
 	 */
-	// final public int opApply(scope ForeachAggregate!(T) dg)
-	// {
-	// 	int result;
+	final public int opApply(scope int delegate(ref T) nothrow @nogc dg)
+	{
+		int result;
 
-	// 	for (T* pointer = this._pointer; pointer >= this._data; pointer--)
-	// 	{
-	// 		result = dg(*pointer);
+		for (T* pointer = this._pointer; pointer >= this._data; pointer--)
+		{
+			result = dg(*pointer);
 
-	// 		if (result)
-	// 		{
-	// 			break;
-	// 		}
-	// 	}
+			if (result)
+			{
+				break;
+			}
+		}
 
-	// 	return result;
-	// }
+		return result;
+	}
 
 	/**
 	 * Enable forward iteration in foreach loops using an index.
@@ -485,23 +488,23 @@ struct Stack(T)
 	 * }
 	 * ---
 	 */
-	// final public int opApply(scope IndexedForeachAggregate!(T) dg)
-	// {
-	// 	int result;
-	// 	size_t index;
+	final public int opApply(scope int delegate(ref size_t, ref T) nothrow @nogc dg)
+	{
+		int result;
+		size_t index;
 
-	// 	for (T* pointer = this._pointer; pointer >= this._data; index++, pointer--)
-	// 	{
-	// 		result = dg(index, *pointer);
+		for (T* pointer = this._pointer; pointer >= this._data; index++, pointer--)
+		{
+			result = dg(index, *pointer);
 
-	// 		if (result)
-	// 		{
-	// 			break;
-	// 		}
-	// 	}
+			if (result)
+			{
+				break;
+			}
+		}
 
-	// 	return result;
-	// }
+		return result;
+	}
 }
 
 ///
@@ -692,6 +695,7 @@ unittest
 	assert(stack.pop()._foo == 3);
 
 	stack.clear();
+	assert(stack.empty);
 }
 
 // Test storing interfaces.
@@ -753,6 +757,8 @@ unittest
 
 unittest
 {
+	import std.range;
+
 	auto stack = Stack!(string)(16);
 
 	stack.push("Foo");
@@ -769,23 +775,30 @@ unittest
 	}
 
 	counter = 0;
+	foreach (index, value; stack.byValue.enumerate)
+	{
+		assert(index == counter);
+		assert(value == data[counter++]);
+	}
+
+	counter = 0;
 	foreach (value; stack.byValue.save)
 	{
 		assert(value == data[counter++]);
 	}
 
-	// counter = 0;
-	// foreach (value; stack)
-	// {
-	// 	assert(value == data[counter++]);
-	// }
+	counter = 0;
+	foreach (value; stack)
+	{
+		assert(value == data[counter++]);
+	}
 
-	// counter = 0;
-	// foreach (index, value; stack)
-	// {
-	// 	assert(index == counter);
-	// 	assert(value == data[counter++]);
-	// }
+	counter = 0;
+	foreach (index, value; stack)
+	{
+		assert(index == counter);
+		assert(value == data[counter++]);
+	}
 
 	assert(stack.pop() == "Qux");
 	assert(stack.pop() == "Baz");
