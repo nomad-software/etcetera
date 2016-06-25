@@ -14,7 +14,7 @@
 </p>
 <h3>License</h3><p>MIT. See LICENSE for full details.</p>
 </div>
-<div class="module-members"><h2><a name="Queue"></a>struct <span class="symbol">Queue</span>(T);
+<div class="module-members"><h2><a name="Queue"></a>struct <span class="symbol">Queue</span>(T) if (is(T == Unqual!T));
 </h2>
 <div class="declaration-description"><div class="sections"><p>A generic first-in-first-out (FIFO) queue implementation.
 </p>
@@ -51,10 +51,10 @@ queue.clear();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Construct a new queue.
 </p>
-<p>By default the queue is allocated enough memory for 8,192 items. If more
- items are added, the queue can grow by doubling its allocation, ad
- infinitum. If the items within reduce to only use half of the current
- allocation the queue will half it. The queue will never shrink below the
+<p>When created, this collection is allocated enough memory for a minimum
+ amount of items. If the collection becomes full, the allocation will
+ double, ad infinitum. If items only occupy half of the collection, the
+ allocation will be halfed. The collection will never shrink below the
  minimum capacity amount.
 
 </p>
@@ -123,7 +123,7 @@ queue.clear();
      </table></p>
 </div>
 </div>
-<h2><a name="Queue.contains"></a>bool <span class="symbol">contains</span>(T item);
+<h2><a name="Queue.contains"></a>pure bool <span class="symbol">contains</span>(T item);
 </h2>
 <div class="declaration-description"><div class="sections"><p>Check if a value is contained in the queue.
 </p>

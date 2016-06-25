@@ -22,7 +22,7 @@ import std.traits;
  * Params:
  *     T = The type stored in the queue.
  */
-struct Queue(T)
+struct Queue(T) if (is(T == Unqual!T))
 {
 	@nogc:
 	nothrow:
@@ -80,10 +80,10 @@ struct Queue(T)
 	/**
 	 * Construct a new queue.
 	 *
-	 * By default the queue is allocated enough memory for 8,192 items. If more
-	 * items are added, the queue can grow by doubling its allocation, ad
-	 * infinitum. If the items within reduce to only use half of the current
-	 * allocation the queue will half it. The queue will never shrink below the
+	 * When created, this collection is allocated enough memory for a minimum
+	 * amount of items. If the collection becomes full, the allocation will
+	 * double, ad infinitum. If items only occupy half of the collection, the
+	 * allocation will be halfed. The collection will never shrink below the
 	 * minimum capacity amount.
 	 *
 	 * Params:
@@ -336,7 +336,7 @@ struct Queue(T)
 	 * Returns:
 	 *     true if the item is found on the queue, false if not.
 	 */
-	public bool contains(T item)
+	public bool contains(T item) pure
 	{
 		if (!this.empty)
 		{

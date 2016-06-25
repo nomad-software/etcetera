@@ -22,7 +22,7 @@ import std.traits;
  * Params:
  *     T = The type stored in the stack.
  */
-struct Stack(T)
+struct Stack(T) if (is(T == Unqual!T))
 {
 	@nogc:
 	nothrow:
@@ -65,10 +65,10 @@ struct Stack(T)
 	/**
 	 * Construct a new stack.
 	 *
-	 * By default the stack is allocated enough memory for 8,192 items. If more
-	 * items are added, the stack can grow by doubling its allocation, ad
-	 * infinitum. If the items within reduce to only use half of the current
-	 * allocation the stack will half it. The stack will never shrink below the
+	 * When created, this collection is allocated enough memory for a minimum
+	 * amount of items. If the collection becomes full, the allocation will
+	 * double, ad infinitum. If items only occupy half of the collection, the
+	 * allocation will be halfed. The collection will never shrink below the
 	 * minimum capacity amount.
 	 *
 	 * Params:

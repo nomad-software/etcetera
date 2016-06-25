@@ -14,7 +14,7 @@
 </p>
 <h3>License</h3><p>MIT. See LICENSE for full details.</p>
 </div>
-<div class="module-members"><h2><a name="Stack"></a>struct <span class="symbol">Stack</span>(T);
+<div class="module-members"><h2><a name="Stack"></a>struct <span class="symbol">Stack</span>(T) if (is(T == Unqual!T));
 </h2>
 <div class="declaration-description"><div class="sections"><p>A generic last-in-first-out (LIFO) stack implementation.
 </p>
@@ -51,10 +51,10 @@ stack.clear();
 </h2>
 <div class="declaration-description"><div class="sections"><p>Construct a new stack.
 </p>
-<p>By default the stack is allocated enough memory for 8,192 items. If more
- items are added, the stack can grow by doubling its allocation, ad
- infinitum. If the items within reduce to only use half of the current
- allocation the stack will half it. The stack will never shrink below the
+<p>When created, this collection is allocated enough memory for a minimum
+ amount of items. If the collection becomes full, the allocation will
+ double, ad infinitum. If items only occupy half of the collection, the
+ allocation will be halfed. The collection will never shrink below the
  minimum capacity amount.
 
 </p>
