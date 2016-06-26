@@ -9,8 +9,9 @@ module etcetera.collection.linkedlist;
 /**
  * Imports.
  */
+import core.exception;
 import core.memory;
-import etcetera.meta;
+import core.stdc.stdlib : malloc, free;
 import std.range;
 import std.traits;
 
@@ -20,8 +21,11 @@ import std.traits;
  * Params:
  *     T = The type stored in each node in the list.
  */
-class LinkedList(T)
+struct LinkedList(T) if (is(T == Unqual!T))
 {
+	@nogc:
+	nothrow:
+
 	/**
 	 * A node in the linked list.
 	 *
@@ -47,6 +51,11 @@ class LinkedList(T)
 	}
 
 	/**
+	 * The reference count.
+	 */
+	private int* _refCount;
+
+	/**
 	 * The starting node.
 	 */
 	private Node* _first;
@@ -61,40 +70,48 @@ class LinkedList(T)
 	 */
 	private size_t _count;
 
-	/**
-	 * Get the first item in the list.
-	 *
-	 * Returns:
-	 *     The first item in the list.
-	 *
-	 * Throws:
-	 *     $(PARAM_TABLE
-	 *         $(PARAM_ROW AssertError, If the list is empty.)
-	 *     )
+	/*
+	 * Disable the default constructor.
 	 */
-	final public @property T first() nothrow pure
-	{
-		assert(this._first, "Linked list empty, getting first value failed.");
+	@disable this();
 
-		return (*this._first).data;
+	/**
+	 * Construct a new linked list.
+	 *
+	 * Params:
+	 *     items = An array of items to initialise the collection with.
+	 */
+	public this(T[] items)
+	{
+		this._refCount  = cast(int*) malloc(int.sizeof);
+		*this._refCount = 1;
+
+		foreach (item; items)
+		{
+			this.insertLast(item);
+		}
 	}
 
 	/**
-	 * Get the last item in the list.
-	 *
-	 * Returns:
-	 *     The last item in the list.
-	 *
-	 * Throws:
-	 *     $(PARAM_TABLE
-	 *         $(PARAM_ROW AssertError, If the list is empty.)
-	 *     )
+	 * Copy constructor post blit.
 	 */
-	final public @property T last() nothrow pure
+	public this(this) pure
 	{
-		assert(this._last, "Linked list empty, getting last value failed.");
+		*this._refCount += 1;
+	}
 
-		return (*this._last).data;
+	/**
+	 * Destructor.
+	 */
+	public ~this()
+	{
+		*this._refCount -= 1;
+
+		if (*this._refCount <= 0)
+		{
+			this.clear();
+			free(this._refCount);
+		}
 	}
 
 	/**
@@ -103,7 +120,7 @@ class LinkedList(T)
 	 * Returns:
 	 *     The number of items stored in the list.
 	 */
-	final public @property size_t count() const nothrow pure
+	public @property size_t count() const pure
 	{
 		return this._count;
 	}
@@ -114,7 +131,7 @@ class LinkedList(T)
 	 * Returns:
 	 *     true if the list is empty, false if not.
 	 */
-	final public @property bool empty() const nothrow pure
+	public @property bool empty() const pure
 	{
 		return this._first is null || this._last is null;
 	}
@@ -130,17 +147,13 @@ class LinkedList(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory allocation fails.)
 	 *     )
 	 */
-	final public void insertFirst(T item) nothrow
+	public void insertFirst(T item)
 	{
-		static if (hasIndirections!(T))
+		auto node = cast(Node*) malloc(Node.sizeof);
+
+		if (node is null)
 		{
-			auto node = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE, typeid(Node));
-			GC.addRoot(node);
-		}
-		else
-		{
-			auto node = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(Node));
-			GC.addRoot(node);
+			onOutOfMemoryError();
 		}
 
 		(*node).prev = null;
@@ -159,27 +172,50 @@ class LinkedList(T)
 			this._last  = node;
 		}
 
+		static if (hasIndirections!(T))
+		{
+			GC.addRange(node, Node.sizeof, typeid(T));
+		}
+
 		this._count++;
+	}
+
+	/**
+	 * Get the first item in the list.
+	 *
+	 * Returns:
+	 *     The first item in the list.
+	 *
+	 * Throws:
+	 *     $(PARAM_TABLE
+	 *         $(PARAM_ROW AssertError, If the list is empty.)
+	 *     )
+	 */
+	public @property T first() pure
+	{
+		assert(this._first, "Linked list empty, getting first value failed.");
+
+		return (*this._first).data;
 	}
 
 	/**
 	 * Remove the first item in the list.
 	 */
-	final public void removeFirst() nothrow
+	public void removeFirst()
 	{
 		if (this._first !is null)
 		{
 			if ((*this._first).next !is null)
 			{
 				this._first = (*this._first).next;
-				GC.removeRoot((*this._first).prev);
-				GC.free((*this._first).prev);
+				GC.removeRange((*this._first).prev);
+				free((*this._first).prev);
 				(*this._first).prev = null;
 			}
 			else
 			{
-				GC.removeRoot(this._first);
-				GC.free(this._first);
+				GC.removeRange(this._first);
+				free(this._first);
 				this._first = null;
 				this._last  = null;
 			}
@@ -199,17 +235,13 @@ class LinkedList(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory allocation fails.)
 	 *     )
 	 */
-	final public void insertLast(T item) nothrow
+	public void insertLast(T item)
 	{
-		static if (hasIndirections!(T))
+		auto node = cast(Node*) malloc(Node.sizeof);
+
+		if (node is null)
 		{
-			auto node = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE, typeid(Node));
-			GC.addRoot(node);
-		}
-		else
-		{
-			auto node = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(Node));
-			GC.addRoot(node);
+			onOutOfMemoryError();
 		}
 
 		(*node).prev = null;
@@ -228,27 +260,50 @@ class LinkedList(T)
 			this._last  = node;
 		}
 
+		static if (hasIndirections!(T))
+		{
+			GC.addRange(node, Node.sizeof, typeid(T));
+		}
+
 		this._count++;
+	}
+
+	/**
+	 * Get the last item in the list.
+	 *
+	 * Returns:
+	 *     The last item in the list.
+	 *
+	 * Throws:
+	 *     $(PARAM_TABLE
+	 *         $(PARAM_ROW AssertError, If the list is empty.)
+	 *     )
+	 */
+	public @property T last() pure
+	{
+		assert(this._last, "Linked list empty, getting last value failed.");
+
+		return (*this._last).data;
 	}
 
 	/**
 	 * Remove the last item in the list.
 	 */
-	final public void removeLast() nothrow
+	public void removeLast()
 	{
 		if (this._last !is null)
 		{
 			if ((*this._last).prev !is null)
 			{
 				this._last = (*this._last).prev;
-				GC.removeRoot((*this._last).next);
-				GC.free((*this._last).next);
+				GC.removeRange((*this._last).next);
+				free((*this._last).next);
 				(*this._last).next = null;
 			}
 			else
 			{
-				GC.removeRoot(this._last);
-				GC.free(this._last);
+				GC.removeRange(this._last);
+				free(this._last);
 				this._first = null;
 				this._last  = null;
 			}
@@ -275,7 +330,7 @@ class LinkedList(T)
 	 *         $(PARAM_ROW OutOfMemoryError, If memory allocation fails.)
 	 *     )
 	 */
-	final public void insert(T item, size_t index) nothrow
+	public void insert(T item, size_t index)
 	{
 		assert(index >= 0 && index <= this._count, "Index outside of list bounds.");
 
@@ -289,15 +344,11 @@ class LinkedList(T)
 		}
 		else
 		{
-			static if (hasIndirections!(T))
+			auto newNode = cast(Node*) malloc(Node.sizeof);
+
+			if (newNode is null)
 			{
-				auto newNode = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE, typeid(Node));
-				GC.addRoot(newNode);
-			}
-			else
-			{
-				auto newNode = cast(Node*)GC.malloc(Node.sizeof, GC.BlkAttr.NO_MOVE | GC.BlkAttr.NO_SCAN, typeid(Node));
-				GC.addRoot(newNode);
+				onOutOfMemoryError();
 			}
 
 			(*newNode).data = item;
@@ -333,6 +384,11 @@ class LinkedList(T)
 				}
 			}
 
+			static if (hasIndirections!(T))
+			{
+				GC.addRange(newNode, Node.sizeof, typeid(T));
+			}
+
 			this._count++;
 		}
 	}
@@ -353,7 +409,7 @@ class LinkedList(T)
 	 *         $(PARAM_ROW AssertError, If index is outside of limits.)
 	 *     )
 	 */
-	final public T get(size_t index) nothrow pure
+	public T get(size_t index) pure
 	{
 		assert(this._count, "List empty, getting value failed.");
 		assert(index >= 0 && index < this._count, "Index outside of list bounds.");
@@ -391,6 +447,7 @@ class LinkedList(T)
 				}
 			}
 		}
+
 		assert(false, "Error accessing linked list.");
 	}
 
@@ -411,7 +468,7 @@ class LinkedList(T)
 	 *         $(PARAM_ROW AssertError, If index is outside of limits.)
 	 *     )
 	 */
-	final public void update(size_t index, T item) nothrow pure
+	public void update(size_t index, T item) pure
 	{
 		assert(this._count, "List empty, updating value failed.");
 		assert(index >= 0 && index < this._count, "Index outside of list bounds.");
@@ -467,7 +524,7 @@ class LinkedList(T)
 	 *         $(PARAM_ROW AssertError, If index is outside of limits.)
 	 *     )
 	 */
-	final public void remove(size_t index) nothrow
+	public void remove(size_t index)
 	{
 		assert(this._count, "List empty, getting value failed.");
 		assert(index >= 0 && index < this._count, "Index outside of list bounds.");
@@ -493,8 +550,8 @@ class LinkedList(T)
 					{
 						(*(*node).prev).next = (*node).next;
 						(*(*node).next).prev = (*node).prev;
-						GC.removeRoot(node);
-						GC.free(node);
+						GC.removeRange(node);
+						free(node);
 						this._count--;
 						break;
 					}
@@ -514,8 +571,8 @@ class LinkedList(T)
 					{
 						(*(*node).prev).next = (*node).next;
 						(*(*node).next).prev = (*node).prev;
-						GC.removeRoot(node);
-						GC.free(node);
+						GC.removeRange(node);
+						free(node);
 						this._count--;
 						break;
 					}
@@ -539,22 +596,38 @@ class LinkedList(T)
 	 * Returns:
 	 *     true if the item is found on the list, false if not.
 	 */
-	final public bool contains(T item)
+	public bool contains(T item) pure
 	{
-		for (auto node = this._first; node !is null; node = (*node).next)
+		if (!this.empty)
 		{
-			if (item == (*node).data)
+			for (auto node = this._first; node !is null; node = (*node).next)
 			{
-				return true;
+				// For the time being we have to handle classes and interfaces as a
+				// special case when comparing because Object.opEquals is not @nogc.
+				static if (is(T == class) || is(T == interface))
+				{
+					if (item is (*node).data)
+					{
+						return true;
+					}
+				}
+				else
+				{
+					if (item == (*node).data)
+					{
+						return true;
+					}
+				}
 			}
 		}
+
 		return false;
 	}
 
 	/**
 	 * Clears the list and deallocates all memory used by the nodes.
 	 */
-	final public void clear() nothrow
+	public void clear()
 	{
 		auto node = this._first;
 		auto next = this._first;
@@ -563,8 +636,8 @@ class LinkedList(T)
 		{
 			next = (*node).next;
 
-			GC.removeRoot(node);
-			GC.free(node);
+			GC.removeRange(node);
+			free(node);
 
 			node = next;
 		}
@@ -587,7 +660,7 @@ class LinkedList(T)
 	 * import std.array;
 	 * import std.string;
 	 *
-	 * auto list = new LinkedList!(string);
+	 * auto list = LinkedList!(string)([]);
 	 *
 	 * list.insertLast("Qux");
 	 * list.insertLast("Baz");
@@ -598,7 +671,7 @@ class LinkedList(T)
 	 * assert(list.byValue.retro.map!(toLower).equal(["bar", "foo", "baz", "qux"]));
 	 * ---
 	 */
-	final public auto byValue() nothrow pure
+	public auto byValue() pure
 	{
 		static struct Result
 		{
@@ -664,7 +737,7 @@ class LinkedList(T)
 	 * ---
 	 * import std.stdio;
 	 *
-	 * auto list = new LinkedList!(string);
+	 * auto list = LinkedList!(string)([]);
 	 *
 	 * list.insertLast("Qux");
 	 * list.insertLast("Baz");
@@ -677,7 +750,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(ForeachAggregate!(T) dg) nothrow
+	public int opApply(scope int delegate(ref T) nothrow @nogc dg)
 	{
 		int result;
 
@@ -710,7 +783,7 @@ class LinkedList(T)
 	 * ---
 	 * import std.stdio;
 	 *
-	 * auto list = new LinkedList!(string);
+	 * auto list = LinkedList!(string)([]);
 	 *
 	 * list.insertLast("Qux");
 	 * list.insertLast("Baz");
@@ -723,7 +796,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApply(IndexedForeachAggregate!(T) dg) nothrow
+	public int opApply(scope int delegate(ref size_t, ref T) nothrow @nogc dg)
 	{
 		int result;
 		size_t index;
@@ -757,7 +830,7 @@ class LinkedList(T)
 	 * ---
 	 * import std.stdio;
 	 *
-	 * auto list = new LinkedList!(string);
+	 * auto list = LinkedList!(string)([]);
 	 *
 	 * list.insertLast("Qux");
 	 * list.insertLast("Baz");
@@ -770,7 +843,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApplyReverse(ForeachAggregate!(T) dg) nothrow
+	public int opApplyReverse(scope int delegate(ref T) nothrow @nogc dg)
 	{
 		int result;
 
@@ -803,7 +876,7 @@ class LinkedList(T)
 	 * ---
 	 * import std.stdio;
 	 *
-	 * auto list = new LinkedList!(string);
+	 * auto list = LinkedList!(string)([]);
 	 *
 	 * list.insertLast("Qux");
 	 * list.insertLast("Baz");
@@ -816,7 +889,7 @@ class LinkedList(T)
 	 * }
 	 * ---
 	 */
-	final public int opApplyReverse(IndexedForeachAggregate!(T) dg) nothrow
+	public int opApplyReverse(scope int delegate(ref size_t, ref T) nothrow @nogc dg)
 	{
 		int result;
 		size_t index = this._count - 1;
@@ -840,10 +913,8 @@ unittest
 {
 	import std.algorithm;
 
-	auto list = new LinkedList!(string);
+	auto list = LinkedList!(string)(["Qux", "Baz"]);
 
-	list.insertLast("Qux");
-	list.insertLast("Baz");
 	list.insertLast("Foo");
 	list.insertLast("Bar");
 
@@ -860,11 +931,55 @@ unittest
 	assert(list.count == 0);
 }
 
+// Test reference counting.
+
+unittest
+{
+	auto foo(T)(T list)
+	{
+		assert(*list._refCount == 2);
+	}
+
+	auto bar(T)(ref T list)
+	{
+		assert(*list._refCount == 1);
+	}
+
+	auto baz(T)(T list)
+	{
+		assert(*list._refCount == 1);
+		return list;
+	}
+
+	auto qux()
+	{
+		return LinkedList!(string)([]);
+	}
+
+	auto list = LinkedList!(string)([]);
+
+	assert(*list._refCount == 1);
+
+	foo(list);
+	assert(*list._refCount == 1);
+
+	bar(list);
+	assert(*list._refCount == 1);
+
+	list = baz(LinkedList!(string)([]));
+	assert(*list._refCount == 1);
+
+	list = qux();
+	assert(*list._refCount == 1);
+}
+
+// Test big datasets.
+
 unittest
 {
 	import std.algorithm;
 
-	auto list = new LinkedList!(int);
+	auto list = LinkedList!(int)([]);
 
 	assert(list.empty);
 	assert(list.count == 0);
@@ -938,33 +1053,125 @@ unittest
 	assert(list.byValue.length == 0);
 }
 
+// Interogate the interface.
+
 unittest
 {
-	auto list = new LinkedList!(byte);
+	auto list = LinkedList!(byte)([]);
 
-	list.insertLast(2);
-	list.insertLast(4);
-	list.insertLast(6);
-	list.insertLast(8);
+	list.insertLast(3);
+	list.insertFirst(1);
+	list.insert(2, 1);
+	list.insertLast(5);
+	list.insert(4, 3);
 
-	assert(list.first == 2);
-	assert(list.last  == 8);
-	assert(list.count == 4);
-	assert(!list.empty);
+	assert(list.get(0) == 1);
+	assert(list.get(1) == 2);
+	assert(list.get(2) == 3);
+	assert(list.get(3) == 4);
+	assert(list.get(4) == 5);
+
+	list.update(0, 8);
+	list.update(1, 8);
+	list.update(2, 8);
+	list.update(3, 8);
+	list.update(4, 8);
+
+	list.remove(1);
+	list.remove(2);
+	list.remove(0);
+	list.remove(1);
+	list.remove(0);
+}
+
+// Test storing objects.
+
+unittest
+{
+	class Foo
+	{
+		private int _foo;
+
+		public this(int foo)
+		{
+			this._foo = foo;
+		}
+	}
+
+	auto list = LinkedList!(Foo)([]);
+	auto foo  = new Foo(1);
+
+	list.insert(foo, 0);
+	list.insert(new Foo(3), 1);
+	list.insert(new Foo(2), 1);
+
+	assert(list.contains(foo));
+	assert(!list.contains(new Foo(1)));
+	assert(list.last._foo == 3);
+
+	list.clear();
+	assert(list.empty);
+}
+
+// Test storing interfaces.
+
+unittest
+{
+	interface Foo
+	{
+		public void foo();
+	}
+
+	auto list = LinkedList!(Foo)([]);
+}
+
+// Test storing structs.
+
+unittest
+{
+	struct Foo
+	{
+		private int _foo;
+
+		public this(int foo)
+		{
+			this._foo = foo;
+		}
+	}
+
+	auto list = LinkedList!(Foo)([]);
+	auto foo  = Foo(1);
+
+	list.insertLast(foo);
+
+	assert(list.contains(foo));
+	assert(!list.contains(Foo(2)));
+	assert(list.last._foo == 1);
+}
+
+// Test the range interface.
+
+unittest
+{
+	import std.algorithm;
+	import std.range;
+	import std.string;
+
+	auto list = LinkedList!(string)(["Foo", "Bar", "Baz"]);
+
+	assert(list.byValue.canFind("Baz"));
+	assert(list.byValue.map!(toLower).array == ["foo", "bar", "baz"]);
+	assert(list.byValue.save.array == ["Foo", "Bar", "Baz"]);
+}
+
+// Test iteration.
+
+unittest
+{
+	auto list = LinkedList!(byte)([2, 4, 6, 8]);
 
 	size_t counter;
 	auto data  = [2, 4, 6, 8];
-
-	foreach (value; list.byValue)
-	{
-		assert(value == data[counter++]);
-	}
-
-	counter = 0;
-	foreach (value; list.byValue.save)
-	{
-		assert(value == data[counter++]);
-	}
 
 	counter = 0;
 	foreach (value; list)
@@ -995,268 +1202,5 @@ unittest
 	list.clear();
 	assert(list.count == 0);
 	assert(list.empty);
-}
-
-unittest
-{
-	auto list = new LinkedList!(string);
-
-	list.insertFirst("Qux");
-	assert(list.first == "Qux");
-	assert(list.byValue.array == ["Qux"]);
-
-	list.insertFirst("Baz");
-	assert(list.first == "Baz");
-	assert(list.byValue.array == ["Baz", "Qux"]);
-
-	list.insertFirst("Bar");
-	assert(list.first == "Bar");
-	assert(list.byValue.array == ["Bar", "Baz", "Qux"]);
-
-	list.insertFirst("Foo");
-	assert(list.first == "Foo");
-	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
-}
-
-unittest
-{
-	auto list = new LinkedList!(string);
-
-	list.insertLast("Foo");
-	list.insertLast("Bar");
-	list.insertLast("Baz");
-	list.insertLast("Qux");
-
-	assert(list.first == "Foo");
-	assert(list.last == "Qux");
-	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
-	assert(list.count == 4);
-
-	list.removeFirst();
-	assert(list.first == "Bar");
-	assert(list.last == "Qux");
-	assert(list.byValue.array == ["Bar", "Baz", "Qux"]);
-	assert(list.count == 3);
-
-	list.removeFirst();
-	assert(list.first == "Baz");
-	assert(list.last == "Qux");
-	assert(list.byValue.array == ["Baz", "Qux"]);
-	assert(list.count == 2);
-
-	list.removeFirst();
-	assert(list.first == "Qux");
-	assert(list.last == "Qux");
-	assert(list.byValue.array == ["Qux"]);
-	assert(list.count == 1);
-
-	list.removeFirst();
-	assert(list._first is null);
-	assert(list._last is null);
-	assert(list.byValue.array == []);
-	assert(list.count == 0);
-}
-
-unittest
-{
-	auto list = new LinkedList!(string);
-
-	list.insertLast("Foo");
-	assert(list.last == "Foo");
-	assert(list.byValue.array == ["Foo"]);
-
-	list.insertLast("Bar");
-	assert(list.last == "Bar");
-	assert(list.byValue.array == ["Foo", "Bar"]);
-
-	list.insertLast("Baz");
-	assert(list.last == "Baz");
-	assert(list.byValue.array == ["Foo", "Bar", "Baz"]);
-
-	list.insertLast("Qux");
-	assert(list.last == "Qux");
-	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
-}
-
-unittest
-{
-	auto list = new LinkedList!(string);
-
-	list.insertLast("Foo");
-	list.insertLast("Bar");
-	list.insertLast("Baz");
-	list.insertLast("Qux");
-
-	assert(list.first == "Foo");
-	assert(list.last == "Qux");
-	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
-	assert(list.count == 4);
-
-	list.removeLast();
-	assert(list.first == "Foo");
-	assert(list.last == "Baz");
-	assert(list.byValue.array == ["Foo", "Bar", "Baz"]);
-	assert(list.count == 3);
-
-	list.removeLast();
-	assert(list.first == "Foo");
-	assert(list.last == "Bar");
-	assert(list.byValue.array == ["Foo", "Bar"]);
-	assert(list.count == 2);
-
-	list.removeLast();
-	assert(list.first == "Foo");
-	assert(list.last == "Foo");
-	assert(list.byValue.array == ["Foo"]);
-	assert(list.count == 1);
-
-	list.removeLast();
-	assert(list._first is null);
-	assert(list._last is null);
-	assert(list.byValue.array == []);
-	assert(list.count == 0);
-}
-
-unittest
-{
-	auto list = new LinkedList!(int);
-
-	list.insert(3, 0);
-	assert(list.byValue.array == [3]);
-
-	list.insert(1, 0);
-	assert(list.byValue.array == [1, 3]);
-
-	list.insert(4, 2);
-	assert(list.byValue.array == [1, 3, 4]);
-
-	list.insert(2, 1);
-	assert(list.byValue.array == [1, 2, 3, 4]);
-}
-
-unittest
-{
-	auto list = new LinkedList!(int);
-
-	list.insertLast(1);
-	list.insertLast(2);
-	list.insertLast(3);
-	list.insertLast(4);
-
-	list.update(3, 8);
-	list.update(0, 5);
-	list.update(2, 7);
-	list.update(1, 6);
-
-	assert(list.byValue.array == [5, 6, 7, 8]);
-}
-
-unittest
-{
-	auto list = new LinkedList!(string);
-
-	list.insertLast("Foo");
-	list.insertLast("Bar");
-	list.insertLast("Baz");
-	list.insertLast("Qux");
-
-	assert(list.get(0) == list.first);
-	assert(list.get(1) == "Bar");
-	assert(list.get(2) == "Baz");
-	assert(list.get(list.count - 1) == list.last);
-
-	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux"]);
-	assert(list.count == 4);
-}
-
-unittest
-{
-	auto list = new LinkedList!(string);
-
-	list.insertLast("Foo");
-	list.insertLast("Bar");
-	list.insertLast("Baz");
-	list.insertLast("Qux");
-	list.insertLast("Quux");
-
-	assert(list.byValue.array == ["Foo", "Bar", "Baz", "Qux", "Quux"]);
-	assert(list.count == 5);
-
-	list.remove(2);
-	assert(list.byValue.array == ["Foo", "Bar", "Qux", "Quux"]);
-	assert(list.count == 4);
-
-	list.remove(1);
-	assert(list.byValue.array == ["Foo", "Qux", "Quux"]);
-	assert(list.count == 3);
-
-	list.remove(2);
-	assert(list.byValue.array == ["Foo", "Qux"]);
-	assert(list.count == 2);
-
-	list.remove(0);
-	assert(list.byValue.array == ["Qux"]);
-	assert(list.count == 1);
-
-	list.remove(0);
-	assert(list.byValue.array == []);
-	assert(list.count == 0);
-	assert(list._first is null);
-	assert(list._last is null);
-}
-
-unittest
-{
-	auto list = new LinkedList!(int);
-
-	assert(list.empty);
-	assert(list.count == 0);
-
-	int limit = 1000;
-
-	for (int x = 1; x <= limit ; x++)
-	{
-		list.insertLast(x);
-		assert(list.last == x);
-		assert(list.count == x);
-	}
-
-	assert(list.count == limit);
-	assert(!list.empty);
-
-	list.insert(1337, 995);
-
-	assert(list.get(994) == 995);
-	assert(list.get(995) == 1337);
-	assert(list.get(996) == 996);
-
-	list.remove(995);
-
-	assert(list.get(994) == 995);
-	assert(list.get(995) == 996);
-	assert(list.get(996) == 997);
-}
-
-unittest
-{
-	class Foo
-	{
-		private int _foo;
-
-		public this(int foo) nothrow
-		{
-			this._foo = foo;
-		}
-	}
-
-	auto list = new LinkedList!(Foo);
-
-	list.insert(new Foo(1), 0);
-	list.insert(new Foo(3), 1);
-	list.insert(new Foo(2), 1);
-
-	assert(list.get(0)._foo == 1);
-	assert(list.get(1)._foo == 2);
-	assert(list.get(2)._foo == 3);
 }
 
