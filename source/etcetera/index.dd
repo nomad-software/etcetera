@@ -11,6 +11,7 @@ $(H3 Packages:)
 $(P
 	$(PARAM_TABLE
 		$(PARAM_ROW $(LINK2 ./collection/package.html, etcetera.collection), A library of generic abstract datatypes.)
+		$(PARAM_ROW $(LINK2 ./encoding/package.html, etcetera.encoding), A library for encoding data.)
 		$(PARAM_ROW $(LINK2 ./meta/package.html, etcetera.meta), A library of meta-programming utilities.)
 		$(PARAM_ROW $(LINK2 ./string/package.html, etcetera.string), A library for working with strings.)
 	)
