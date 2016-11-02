@@ -9,7 +9,9 @@ module etcetera.encoding.hash;
 /**
  * Imports.
  */
+import core.internal.hash;
 import etcetera.encoding.tobytes;
+import std.traits;
 
 /**
  * Return a hash of any value.
@@ -22,7 +24,14 @@ import etcetera.encoding.tobytes;
  *     A numeric hash.
  */
 public size_t hash(T)(T value, size_t seed = 0) pure nothrow @nogc
+if (isNumeric!(T) || isBoolean!(T) || isSomeString!(T) || is(T == struct) || is(T == union) || is(T == class))
 {
 	auto buffer = value.toBytes();
 	return bytesHash(buffer.ptr, buffer.length, seed);
+}
+
+unittest
+{
+	import std.stdio;
+	writefln("%s", hash(1));
 }
