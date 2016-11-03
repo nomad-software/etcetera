@@ -14,7 +14,7 @@
 </p>
 <h3>License</h3><p>MIT. See LICENSE for full details.</p>
 </div>
-<div class="module-members"><h2><a name="hash"></a>pure nothrow @nogc size_t <span class="symbol">hash</span>(T)(T value, size_t seed = 0);
+<div class="module-members"><h2><a name="hash"></a>nothrow @nogc size_t <span class="symbol">hash</span>(T)(T value, size_t seed = 0) if (isNumeric!T || isBoolean!T || isSomeString!T || is(T == struct) || is(T == union) || is(T == class));
 </h2>
 <div class="declaration-description"><div class="sections"><p>Return a <span class="symbol">hash</span> of any value.
 </p>

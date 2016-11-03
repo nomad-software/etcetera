@@ -14,7 +14,7 @@
 </p>
 <h3>License</h3><p>MIT. See LICENSE for full details.</p>
 </div>
-<div class="module-members"><h2><a name="toBytes"></a>pure nothrow @nogc ubyte[] <span class="symbol">toBytes</span>(T)(ref T value) if (isNumeric!T);
+<div class="module-members"><h2><a name="toBytes"></a>nothrow @nogc ubyte[] <span class="symbol">toBytes</span>(T)(ref T value) if (isNumeric!T || isBoolean!T || is(T == struct) || is(T == union));
 </h2>
 <div class="declaration-description"><div class="sections"><p>Encode any value to an array of bytes.
 </p>

@@ -20,7 +20,7 @@ import std.traits;
  * Returns:
  *     An array of bytes.
  */
-public ubyte[] toBytes(T)(ref T value) pure nothrow @nogc if (isNumeric!(T) || isBoolean!(T) || is(T == struct) || is(T == union))
+public ubyte[] toBytes(T)(ref T value) nothrow @nogc if (isNumeric!(T) || isBoolean!(T) || is(T == struct) || is(T == union))
 {
 	return cast(ubyte[]) (&value)[0 .. 1];
 }
@@ -142,7 +142,7 @@ unittest
 }
 
 // Ditto
-public ubyte[] toBytes(T)(ref T value) pure nothrow @nogc if (isSomeString!(T))
+public ubyte[] toBytes(T)(ref T value) nothrow @nogc if (isSomeString!(T))
 {
 	return cast(ubyte[]) value;
 }
@@ -166,7 +166,7 @@ unittest
 }
 
 // Ditto
-public ubyte[] toBytes(T)(ref T value) pure nothrow @nogc if (is(T == class))
+public ubyte[] toBytes(T)(ref T value) nothrow @nogc if (is(T == class))
 {
 	return *(cast(ubyte[__traits(classInstanceSize, T)]*)(value));
 }

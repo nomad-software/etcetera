@@ -1,0 +1,221 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<link type="text/css" href="http://www.nomad.so/ddoc/css/theme.css" rel="stylesheet" media="all" />
+		<script type="text/javascript" src="http://www.nomad.so/ddoc/javascript/jquery-2.0.3.min.js"></script>
+		<script type="text/javascript" src="http://www.nomad.so/ddoc/javascript/jquery.scrollTo.min.js"></script>
+		<script type="text/javascript" src="http://www.nomad.so/ddoc/javascript/index.js"></script>
+		<title>etcetera.collection.hashmap</title>
+	</head>
+	<body>
+		<h1>etcetera.collection.hashmap</h1>
+		<div class="sections"><p>Collection module.
+</p>
+<h3>License</h3><p>MIT. See LICENSE for full details.</p>
+</div>
+<div class="module-members"><h2><a name="HashMap"></a>struct <span class="symbol">HashMap</span>(K, V) if (is(K == Unqual!K) &amp;&amp; is(V == Unqual!V));
+</h2>
+<div class="declaration-description"><div class="sections"><p>A generic chained hash map implementation.
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>K</td>
+<td>The key type used in the hash map.</td></tr>
+<tr><td>V</td>
+<td>The value type stored in the hash map.</td></tr>
+</table>
+<h3>Examples</h3><p><pre>
+<span class="keyword">auto</span> hashMap = <span class="symbol">HashMap</span>!(string, string)(16);
+
+hashMap.put(<span class="string">"foo"</span>, <span class="string">"Lorem ipsum"</span>);
+hashMap.put(<span class="string">"bar"</span>, <span class="string">"Dolor sit amet"</span>);
+
+<span class="keyword">assert</span>(!hashMap.empty);
+<span class="keyword">assert</span>(hashMap.count == 2);
+
+<span class="keyword">assert</span>(hashMap.hasKey(<span class="string">"foo"</span>));
+<span class="keyword">assert</span>(hashMap.hasValue(<span class="string">"Lorem ipsum"</span>));
+<span class="keyword">assert</span>(hashMap.get(<span class="string">"foo"</span>) == <span class="string">"Lorem ipsum"</span>);
+
+hashMap.remove(<span class="string">"bar"</span>);
+<span class="keyword">assert</span>(!hashMap.hasKey(<span class="string">"bar"</span>));
+
+hashMap.clear();
+<span class="keyword">assert</span>(!hashMap.hasValue(<span class="string">"Lorem ipsum"</span>));
+<span class="keyword">assert</span>(hashMap.empty);
+<span class="keyword">assert</span>(hashMap.count == 0);
+</pre>
+</p></div>
+<div class="struct-members"><h2><a name="HashMap.this"></a>this(size_t minBuckets);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Construct a new hash map.
+</p>
+<p>When created, this collection is allocated enough memory for a minimum
+ amount of items. Once a particular load has been achieved (specified by
+ the load factor), the allocation will double, ad infinitum. If items
+ only occupy half of the collection, the allocation will be halfed. The
+ collection will never shrink below the minimum capacity amount.
+
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>size_t minBuckets</td>
+<td>The minimum number of buckets to allocate space for.
+                   The hash map will never shrink below this allocation.</td></tr>
+<tr><td>loadFactor</td>
+<td>The factor used to determine whether or not to increase
+                  the hash map's memory allocation.</td></tr>
+</table>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If the minimum allocated size is not big enough for at least one bucket.</td></tr>
+         <tr><td>OutOfMemoryError</td><td>If memory allocation fails.</td></tr>
+     </table></p>
+</div>
+</div>
+<h2><a name="HashMap.put"></a>void <span class="symbol">put</span>(K key, V item);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Add an item to the hash map referenced by key.
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>K key</td>
+<td>The key under which to add the item.</td></tr>
+<tr><td>V item</td>
+<td>The item to add.</td></tr>
+</table>
+</div>
+</div>
+<h2><a name="HashMap.get"></a>V <span class="symbol">get</span>(K key);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Get an item from the hash map referenced by key. The key must
+ exist in the hash map or an error will be raised.
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>K key</td>
+<td>The key of the item to <span class="symbol">get</span>.</td></tr>
+</table>
+<h3>Return Value</h3><p>The value stored with the passed key.
+
+</p>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If key doesn't exist in the hash map.</td></tr>
+     </table></p>
+</div>
+</div>
+<h2><a name="HashMap.remove"></a>void <span class="symbol">remove</span>(K key);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Remove an item from the hash map referenced by key. No errors are raised
+ if key doesn't exist in the hash map.
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>K key</td>
+<td>The key of the item to <span class="symbol">remove</span>.</td></tr>
+</table>
+</div>
+</div>
+<h2><a name="HashMap.count"></a>const pure @property size_t <span class="symbol">count</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Get the number of items stored in the hash map.
+</p>
+<h3>Return Value</h3><p>The number of items stored in the hash map.</p>
+</div>
+</div>
+<h2><a name="HashMap.empty"></a>const pure @property bool <span class="symbol">empty</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Test if the hash map is <span class="symbol">empty</span> or not.
+</p>
+<h3>Return Value</h3><p><strong>true</strong> if the hash map is <span class="symbol">empty</span>, <strong>false</strong> if not.</p>
+</div>
+</div>
+<h2><a name="HashMap.hasValue"></a>bool <span class="symbol">hasValue</span>(V value);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Returns <strong>true</strong> if the value is contained within the hash map.
+</p>
+<p>This is a simple linear search and can take quite some time with large
+ hash maps.
+
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>V value</td>
+<td>The value to check.</td></tr>
+</table>
+<h3>Return Value</h3><p><strong>true</strong> if the value id found, <strong>false</strong> if not.</p>
+</div>
+</div>
+<h2><a name="HashMap.hasKey"></a>bool <span class="symbol">hasKey</span>(K key);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Returns <strong>true</strong> if the key is used within the hash map.
+</p>
+<p>This is a simple linear search and can take quite some time with large
+ hash maps.
+
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>K key</td>
+<td>The key to check.</td></tr>
+</table>
+<h3>Return Value</h3><p><strong>true</strong> if the key is used, <strong>false</strong> if not.</p>
+</div>
+</div>
+<h2><a name="HashMap.clear"></a>void <span class="symbol">clear</span>();
+</h2>
+<div class="declaration-description"><div class="sections"><p>Clears the hash map.
+</p>
+<p>This method reallocates the memory used by the hash map to the minimum
+ bucket size if more is currently allocated.
+
+</p>
+<h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>OutOfMemoryError</td><td>If memory reallocation fails.</td></tr>
+     </table></p>
+</div>
+</div>
+<h2><a name="HashMap.opIndexAssign"></a>void <span class="symbol">opIndexAssign</span>(V value, K key);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Overload the index assignment operator to set values using a key.
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>V value</td>
+<td>The value to store.</td></tr>
+<tr><td>K key</td>
+<td>The key to store the value against.</td></tr>
+</table>
+<p><h3>Example:</h3>
+<pre>hashMap[<span class="string">"foo"</span>] = <span class="string">"Lorem ipsum"</span>;
+</pre>
+</p>
+</div>
+</div>
+<h2><a name="HashMap.opIndexOpAssign"></a>void <span class="symbol">opIndexOpAssign</span>(string op)(V value, K key);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Overload index assignment operators to modify values referenced by key.
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>V value</td>
+<td>The value to store.</td></tr>
+<tr><td>K key</td>
+<td>The key to store the value against.</td></tr>
+</table>
+<p><h3>Example:</h3>
+<pre>hashMap[<span class="string">"foo"</span>] += 1;
+hashMap[<span class="string">"foo"</span>] -= 2;
+hashMap[<span class="string">"foo"</span>] *= 3;
+hashMap[<span class="string">"foo"</span>] /= 4;
+hashMap[<span class="string">"foo"</span>] %= 5;
+hashMap[<span class="string">"foo"</span>] ^^= 6;
+hashMap[<span class="string">"foo"</span>] &amp;= 7;
+hashMap[<span class="string">"foo"</span>] |= 8;
+hashMap[<span class="string">"foo"</span>] ^= 9;
+hashMap[<span class="string">"foo"</span>] &lt;&lt;= 10;
+hashMap[<span class="string">"foo"</span>] &gt;&gt;= 11;
+hashMap[<span class="string">"foo"</span>] &gt;&gt;&gt;= 12;
+hashMap[<span class="string">"bar"</span>] ~= <span class="string">"Lorem ipsum"</span>;
+</pre>
+</p>
+</div>
+</div>
+<h2><a name="HashMap.opIndex"></a>V <span class="symbol">opIndex</span>(K key);
+</h2>
+<div class="declaration-description"><div class="sections"><p>Overload the index operator to retrieve values via a key.
+</p>
+<h3>Parameters</h3><table class="parameter-list"><tr><td>K key</td>
+<td>The key from which to retrieve the value.</td></tr>
+</table>
+<p><h3>Example:</h3>
+<pre><span class="keyword">assert</span>(hashMap[<span class="string">"foo"</span>] == <span class="string">"Lorem ipsum"</span>);
+</pre>
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+	</body>
+</html>

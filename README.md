@@ -14,6 +14,9 @@
     * [linkedlist](http://htmlpreview.github.io/?https://github.com/nomad-software/etcetera/master/docs/etcetera/collection/linkedlist.html)
     * [queue](http://htmlpreview.github.io/?https://github.com/nomad-software/etcetera/master/docs/etcetera/collection/queue.html)
     * [stack](http://htmlpreview.github.io/?https://github.com/nomad-software/etcetera/master/docs/etcetera/collection/stack.html)
+  * encoding
+    * [hash](http://htmlpreview.github.io/?https://github.com/nomad-software/etcetera/master/docs/etcetera/encoding/hash.html)
+    * [tobytes](http://htmlpreview.github.io/?https://github.com/nomad-software/etcetera/master/docs/etcetera/encoding/tobytes.html)
   * meta
     * [foreachaggregate](http://htmlpreview.github.io/?https://github.com/nomad-software/etcetera/master/docs/etcetera/meta/foreachaggregate.html)
     * [indexedforeachaggregate](http://htmlpreview.github.io/?https://github.com/nomad-software/etcetera/master/docs/etcetera/meta/indexedforeachaggregate.html)

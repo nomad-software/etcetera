@@ -23,7 +23,7 @@ import std.traits;
  * Returns:
  *     A numeric hash.
  */
-public size_t hash(T)(T value, size_t seed = 0) pure nothrow @nogc
+public size_t hash(T)(T value, size_t seed = 0) nothrow @nogc
 if (isNumeric!(T) || isBoolean!(T) || isSomeString!(T) || is(T == struct) || is(T == union) || is(T == class))
 {
 	auto buffer = value.toBytes();
@@ -32,6 +32,6 @@ if (isNumeric!(T) || isBoolean!(T) || isSomeString!(T) || is(T == struct) || is(
 
 unittest
 {
-	import std.stdio;
-	writefln("%s", hash(1));
+	// import std.stdio;
+	// writefln("%s", hash(1));
 }
