@@ -5,6 +5,10 @@
 
 ---
 
+## Status
+
+Currently this module is abandoned and no futher updates will be made.
+
 ## Contents
 
 * etcetera

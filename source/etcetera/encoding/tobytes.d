@@ -113,6 +113,7 @@ unittest
 	assert(toBytes(foo) == result);
 }
 
+///
 unittest
 {
 	struct Foo
@@ -141,12 +142,21 @@ unittest
 	assert(toBytes(foo) == [4, 4, 4, 4, 3, 3, 2, 1]);
 }
 
-// Ditto
+/**
+ * Encode any value to an array of bytes.
+ *
+ * Params:
+ *     value = The value to encode.
+ *
+ * Returns:
+ *     An array of bytes.
+ */
 public ubyte[] toBytes(T)(ref T value) nothrow @nogc if (isSomeString!(T))
 {
 	return cast(ubyte[]) value;
 }
 
+///
 unittest
 {
 	string foo = "England";
@@ -165,12 +175,21 @@ unittest
 	assert(toBytes(foo) == [45, 78, 0, 0, 78, 83, 0, 0, 186, 78, 0, 0, 17, 108, 0, 0, 113, 81, 0, 0, 140, 84, 0, 0, 253, 86, 0, 0]);
 }
 
-// Ditto
+/**
+ * Encode any value to an array of bytes.
+ *
+ * Params:
+ *     value = The value to encode.
+ *
+ * Returns:
+ *     An array of bytes.
+ */
 public ubyte[] toBytes(T)(ref T value) nothrow @nogc if (is(T == class))
 {
 	return *(cast(ubyte[__traits(classInstanceSize, T)]*)(value));
 }
 
+///
 unittest
 {
 	class Foo
@@ -191,8 +210,10 @@ unittest
 
 	auto foo = new Foo(1, 2, 3, 4);
 	auto bar = foo;
+	auto baz = new Foo(4, 3, 2, 1);
 
 	assert(toBytes(foo) == toBytes(bar));
+	assert(toBytes(bar) != toBytes(baz));
 }
 
 version(unittest)

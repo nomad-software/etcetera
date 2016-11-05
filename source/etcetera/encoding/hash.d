@@ -30,8 +30,9 @@ if (isNumeric!(T) || isBoolean!(T) || isSomeString!(T) || is(T == struct) || is(
 	return bytesHash(buffer.ptr, buffer.length, seed);
 }
 
+///
 unittest
 {
-	// import std.stdio;
-	// writefln("%s", hash(1));
+	assert(hash(1337) == 3412859167);
+	assert(hash("foo") == 4138058784);
 }

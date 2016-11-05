@@ -59,9 +59,6 @@ hashMap.clear();
 <h3>Parameters</h3><table class="parameter-list"><tr><td>size_t minBuckets</td>
 <td>The minimum number of buckets to allocate space for.
                    The hash map will never shrink below this allocation.</td></tr>
-<tr><td>loadFactor</td>
-<td>The factor used to determine whether or not to increase
-                  the hash map's memory allocation.</td></tr>
 </table>
 <h3>Exceptions Thrown</h3><p><table class="parameter-list">         <tr><td>AssertError</td><td>If the minimum allocated size is not big enough for at least one bucket.</td></tr>
          <tr><td>OutOfMemoryError</td><td>If memory allocation fails.</td></tr>
@@ -195,7 +192,6 @@ hashMap[<span class="string">"foo"</span>] ^= 9;
 hashMap[<span class="string">"foo"</span>] &lt;&lt;= 10;
 hashMap[<span class="string">"foo"</span>] &gt;&gt;= 11;
 hashMap[<span class="string">"foo"</span>] &gt;&gt;&gt;= 12;
-hashMap[<span class="string">"bar"</span>] ~= <span class="string">"Lorem ipsum"</span>;
 </pre>
 </p>
 </div>

@@ -96,8 +96,6 @@ struct HashMap(K, V) if (is(K == Unqual!K) && is(V == Unqual!V))
 	 * Params:
 	 *     minBuckets = The minimum number of buckets to allocate space for.
 	 *                   The hash map will never shrink below this allocation.
-	 *     loadFactor = The factor used to determine whether or not to increase
-	 *                  the hash map's memory allocation.
 	 *
 	 * Throws:
 	 *     $(PARAM_TABLE
@@ -427,12 +425,10 @@ struct HashMap(K, V) if (is(K == Unqual!K) && is(V == Unqual!V))
 	 * hashMap["foo"] <<= 10;
 	 * hashMap["foo"] >>= 11;
 	 * hashMap["foo"] >>>= 12;
-	 * hashMap["bar"] ~= "Lorem ipsum";
 	 * ---
 	 */
 	public void opIndexOpAssign(string op)(V value, K key)
 	{
-		// static if (op == "~") { this.put(key, this.get(key) ~ value); }
 		     static if (op == "+"  ) { this.put(key, this.get(key) +  value); }
 		else static if (op == "-"  ) { this.put(key, this.get(key) -  value); }
 		else static if (op == "*"  ) { this.put(key, this.get(key) *  value); }
@@ -570,12 +566,6 @@ unittest
 
 unittest
 {
-	// auto stringMap = HashMap!(string, string)(16);
-	// stringMap["foo"] = "Lorem ipsum";
-
-	// stringMap["foo"] ~= " dolor sit amet";
-	// assert(stringMap["foo"] == "Lorem ipsum dolor sit amet");
-
 	auto intMap = HashMap!(string, uint)(16);
 	intMap["bar"] = 100;
 
