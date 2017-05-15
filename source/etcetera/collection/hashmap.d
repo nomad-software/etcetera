@@ -40,6 +40,27 @@ struct HashMap(K, V) if (is(K == Unqual!K) && is(V == Unqual!V))
 	{
 		public K key;
 		public V value;
+
+		bool opEquals()(auto ref Payload other) {
+			// For the time being we have to handle classes and interfaces as a
+			// special case when comparing because Object.opEquals is not @nogc.
+			static if (is(V == class) || is(V == interface))
+			{
+				if (this.value is other.value)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				if (this.value == other.value)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
 	}
 
 	/**
@@ -319,9 +340,21 @@ struct HashMap(K, V) if (is(K == Unqual!K) && is(V == Unqual!V))
 			{
 				foreach (payload; *bucket)
 				{
-					if (payload.value == value)
+					// For the time being we have to handle classes and interfaces as a
+					// special case when comparing because Object.opEquals is not @nogc.
+					static if (is(V == class) || is(V == interface))
 					{
-						return true;
+						if (payload.value is value)
+						{
+							return true;
+						}
+					}
+					else
+					{
+						if (payload.value == value)
+						{
+							return true;
+						}
 					}
 				}
 			}
@@ -464,26 +497,70 @@ struct HashMap(K, V) if (is(K == Unqual!K) && is(V == Unqual!V))
 ///
 unittest
 {
-	auto hashMap = HashMap!(string, string)(16);
+	auto map = HashMap!(string, string)(16);
 
-	hashMap.put("foo", "Lorem ipsum");
-	hashMap.put("bar", "Dolor sit amet");
+	map.put("foo", "Lorem ipsum");
+	map.put("bar", "Dolor sit amet");
 
-	assert(!hashMap.empty);
-	assert(hashMap.count == 2);
+	assert(!map.empty);
+	assert(map.count == 2);
 
-	assert(hashMap.hasKey("foo"));
-	assert(hashMap.hasValue("Lorem ipsum"));
-	assert(hashMap.get("foo") == "Lorem ipsum");
+	assert(map.hasKey("foo"));
+	assert(map.hasValue("Lorem ipsum"));
+	assert(map.get("foo") == "Lorem ipsum");
 
-	hashMap.remove("bar");
-	assert(!hashMap.hasKey("bar"));
+	map.remove("bar");
+	assert(!map.hasKey("bar"));
 
-	hashMap.clear();
-	assert(!hashMap.hasValue("Lorem ipsum"));
-	assert(hashMap.empty);
-	assert(hashMap.count == 0);
+	map.clear();
+	assert(!map.hasValue("Lorem ipsum"));
+	assert(map.empty);
+	assert(map.count == 0);
 }
+
+// Test reference counting.
+
+unittest
+{
+	auto foo(T)(T map)
+	{
+		assert(*map._refCount == 2);
+	}
+
+	auto bar(T)(ref T map)
+	{
+		assert(*map._refCount == 1);
+	}
+
+	auto baz(T)(T map)
+	{
+		assert(*map._refCount == 1);
+		return map;
+	}
+
+	auto qux()
+	{
+		return HashMap!(string, string)(16);
+	}
+
+	auto map = HashMap!(string, string)(16);
+
+	assert(*map._refCount == 1);
+
+	foo(map);
+	assert(*map._refCount == 1);
+
+	bar(map);
+	assert(*map._refCount == 1);
+
+	map = baz(HashMap!(string, string)(16));
+	assert(*map._refCount == 1);
+
+	map = qux();
+	assert(*map._refCount == 1);
+}
+
+// Test big datasets.
 
 unittest
 {
@@ -491,118 +568,196 @@ unittest
 	import std.conv;
 	import std.stdio;
 
-	auto hashMap = HashMap!(string, int)(16);
+	auto map = HashMap!(string, int)(16);
 
-	assert(hashMap.empty);
-	assert(hashMap.count == 0);
+	assert(map.empty);
+	assert(map.count == 0);
 
-	int limit = 200_000;
+	int limit = 50_000;
 
 	for (int x = 1; x <= limit ; x++)
 	{
-		hashMap.put(x.to!(string), x);
-		assert(hashMap.get(x.to!(string)) == x);
-		assert(hashMap.count == x);
+		map.put(x.to!(string), x);
+		assert(map.get(x.to!(string)) == x);
+		assert(map.count == x);
 	}
 
-	assert(hashMap.get(limit.to!(string)) == limit);
-	assert(hashMap.count == limit);
-	assert(hashMap.hasValue(1));
-	assert(hashMap.hasValue(limit));
-	assert(hashMap.hasKey("1"));
-	assert(hashMap.hasKey(limit.to!(string)));
+	assert(map.get(limit.to!(string)) == limit);
+	assert(map.count == limit);
+	assert(map.hasValue(1));
+	assert(map.hasValue(limit));
+	assert(map.hasKey("1"));
+	assert(map.hasKey(limit.to!(string)));
 
-	// assert(hashMap.byValue.canFind(1));
-	// assert(hashMap.byValue.canFind(limit));
-	// assert(hashMap.byValue.length == limit);
-	assert(!hashMap.empty);
+	// assert(map.byValue.canFind(1));
+	// assert(map.byValue.canFind(limit));
+	// assert(map.byValue.length == limit);
+	assert(!map.empty);
 
 	for (int x = limit; x >= 1 ; x--)
 	{
-		assert(hashMap.count == x);
-		assert(hashMap.get(x.to!(string)) == x);
-		hashMap.remove(x.to!(string));
+		assert(map.count == x);
+		assert(map.get(x.to!(string)) == x);
+		map.remove(x.to!(string));
 	}
 
-	assert(hashMap.empty);
+	assert(map.empty);
 
 	for (int x = 1; x <= limit ; x++)
 	{
-		hashMap.put(x.to!(string), x);
-		assert(hashMap.get(x.to!(string)) == x);
-		assert(hashMap.count == x);
+		map.put(x.to!(string), x);
+		assert(map.get(x.to!(string)) == x);
+		assert(map.count == x);
 	}
 
-	hashMap.clear();
+	map.clear();
 
-	assert(hashMap.empty);
-	assert(hashMap.count == 0);
-	assert(!hashMap.hasValue(1));
-	assert(!hashMap.hasValue(limit));
-	assert(!hashMap.hasKey("1"));
-	assert(!hashMap.hasKey(limit.to!(string)));
-	// assert(hashMap.byValue.length == 0);
+	assert(map.empty);
+	assert(map.count == 0);
+	assert(!map.hasValue(1));
+	assert(!map.hasValue(limit));
+	assert(!map.hasKey("1"));
+	assert(!map.hasKey(limit.to!(string)));
+	// assert(map.byValue.length == 0);
 }
+
+// Test bucketizing.
 
 unittest
 {
-	auto hashMap = HashMap!(string, string)(1);
-	assert(hashMap._bucketNumber == 1);
+	auto map = HashMap!(string, string)(1);
+	assert(map._bucketNumber == 1);
 
-	hashMap.put("foo", "Lorem ipsum");
-	assert(hashMap._bucketNumber == 2);
+	map.put("foo", "Lorem ipsum");
+	assert(map._bucketNumber == 2);
 
-	hashMap.put("bar", "Dolor sit amet");
-	hashMap.put("baz", "Consectetur adipiscing elit");
+	map.put("bar", "Dolor sit amet");
+	map.put("baz", "Consectetur adipiscing elit");
 
-	assert(hashMap.count == 3);
+	assert(map.count == 3);
 
-	hashMap.remove("baz");
-	hashMap.remove("foo");
-	hashMap.remove("bar");
+	map.remove("baz");
+	map.remove("foo");
+	map.remove("bar");
 
-	assert(hashMap.empty);
+	assert(map.empty);
 }
+
+// Test operator overloading.
 
 unittest
 {
-	auto intMap = HashMap!(string, uint)(16);
-	intMap["bar"] = 100;
+	auto map = HashMap!(string, uint)(16);
+	map["bar"] = 100;
 
-	intMap["bar"] += 1;
-	assert(intMap["bar"] == 101);
+	map["bar"] += 1;
+	assert(map["bar"] == 101);
 
-	intMap["bar"] -= 1;
-	assert(intMap["bar"] == 100);
+	map["bar"] -= 1;
+	assert(map["bar"] == 100);
 
-	intMap["bar"] *= 3;
-	assert(intMap["bar"] == 300);
+	map["bar"] *= 3;
+	assert(map["bar"] == 300);
 
-	intMap["bar"] /= 2;
-	assert(intMap["bar"] == 150);
+	map["bar"] /= 2;
+	assert(map["bar"] == 150);
 
-	intMap["bar"] %= 4;
-	assert(intMap["bar"] == 2);
+	map["bar"] %= 4;
+	assert(map["bar"] == 2);
 
-	intMap["bar"] ^^= 8;
-	assert(intMap["bar"] == 256);
+	map["bar"] ^^= 8;
+	assert(map["bar"] == 256);
 
-	intMap["bar"] &= 1023;
-	assert(intMap["bar"] == 256);
+	map["bar"] &= 1023;
+	assert(map["bar"] == 256);
 
-	intMap["bar"] |= 640;
-	assert(intMap["bar"] == 896);
+	map["bar"] |= 640;
+	assert(map["bar"] == 896);
 
-	intMap["bar"] ^= 304;
-	assert(intMap["bar"] == 688);
+	map["bar"] ^= 304;
+	assert(map["bar"] == 688);
 
-	intMap["bar"] <<= 2;
-	assert(intMap["bar"] == 2752);
+	map["bar"] <<= 2;
+	assert(map["bar"] == 2752);
 
-	intMap["bar"] >>= 2;
-	assert(intMap["bar"] == 688);
+	map["bar"] >>= 2;
+	assert(map["bar"] == 688);
 
-	intMap["bar"] >>>= 5;
-	assert(intMap["bar"] == 21);
+	map["bar"] >>>= 5;
+	assert(map["bar"] == 21);
 }
 
+// Test storing objects.
+
+unittest
+{
+
+	class Foo
+	{
+		private int _foo;
+
+		public this(int foo)
+		{
+			this._foo = foo;
+		}
+	}
+
+	auto map = HashMap!(string, Foo)(16);
+	auto foo = new Foo(1);
+
+	map.put("foo", foo);
+	map.put("bar", new Foo(3));
+	map.put("baz", new Foo(2));
+
+	assert(map.hasValue(foo));
+	assert(!map.hasValue(new Foo(1)));
+	assert(map.get("bar")._foo == 3);
+
+	map.clear();
+	assert(map.empty);
+}
+
+// Test storing interfaces.
+
+unittest
+{
+	interface Foo
+	{
+		public void foo();
+	}
+
+	auto map = HashMap!(string, Foo)(16);
+}
+
+// Test storing structs.
+
+unittest
+{
+	struct Foo
+	{
+		private int _foo;
+
+		public this(int foo)
+		{
+			this._foo = foo;
+		}
+	}
+
+	auto map = HashMap!(string, Foo)(16);
+	auto foo = Foo(1);
+
+	map.put("foo", foo);
+	map.put("bar", Foo(3));
+	map.put("baz", Foo(2));
+
+	assert(map.hasValue(foo));
+	assert(map.hasValue(Foo(1)));
+	assert(map.get("bar")._foo == 3);
+
+	map.clear();
+	assert(map.empty);
+}
+
+// Test the range interface.
+
+// Test iteration.
