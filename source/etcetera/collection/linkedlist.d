@@ -97,7 +97,10 @@ struct LinkedList(T) if (is(T == Unqual!T))
 	 */
 	public this(this) pure
 	{
-		*this._refCount += 1;
+		if (this._refCount !is null)
+		{
+			*this._refCount += 1;
+		}
 	}
 
 	/**
@@ -105,12 +108,15 @@ struct LinkedList(T) if (is(T == Unqual!T))
 	 */
 	public ~this()
 	{
-		*this._refCount -= 1;
-
-		if (*this._refCount <= 0)
+		if (this._refCount !is null)
 		{
-			this.clear();
-			free(this._refCount);
+			*this._refCount -= 1;
+
+			if (*this._refCount <= 0)
+			{
+				this.clear();
+				free(this._refCount);
+			}
 		}
 	}
 
