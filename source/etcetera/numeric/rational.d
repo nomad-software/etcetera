@@ -63,7 +63,7 @@ struct Rational
 		}
 		else static if (op == "/")
 		{
-			return this * Rational(other.denominator, other.numerator);
+			return this.reduce(this.numerator * other.denominator, this.denominator * other.numerator);
 		}
 		else
 		{
